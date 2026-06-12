@@ -326,7 +326,7 @@
             margin-bottom: 20px;
         }
         .hidden { display: none !important; }
-        
+
         .group-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .group-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
         .group-color-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -335,7 +335,7 @@
         .group-color-5 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
         .group-color-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333 !important; }
         .group-color-7 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333 !important; }
-        
+
         .copy-hint {
             font-size: 12px;
             color: #999;
@@ -387,6 +387,7 @@
             100% { transform: rotate(360deg); }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -402,18 +403,18 @@
         <div class="card">
             <h1>📝 活动报名</h1>
             <p class="subtitle">填写姓名完成报名，等待管理员分组</p>
-            
+
             <div class="success-msg" id="join-success">
                 ✅ 报名成功！请等待管理员分组
             </div>
-            
+
             <div class="input-group">
                 <label>您的姓名</label>
                 <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
             </div>
-            
+
             <button class="btn btn-primary" onclick="submitJoin()">立即报名</button>
-            
+
             <div style="margin-top: 24px; text-align: center;">
                 <div style="font-size: 13px; color: #999; margin-bottom: 8px;">已报名人数</div>
                 <div style="font-size: 36px; font-weight: 700; color: #4f46e5;" id="join-count">0</div>
@@ -430,7 +431,7 @@
         <div class="card">
             <h1>⚙️ 管理控制台</h1>
             <p class="subtitle">查看报名人员并随机分组</p>
-            
+
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-num" id="admin-count">0</div>
@@ -478,7 +479,7 @@
                 </div>
                 <button class="btn btn-success" onclick="generateGroups()" style="width: auto; padding: 14px 24px;">开始分组</button>
             </div>
-            
+
             <div class="group-result" id="group-result"></div>
         </div>
     </div>
@@ -501,7 +502,6 @@
 
 <script>
 // ==================== Supabase 配置 ====================
-// ⚠️ 把下面两个值替换成你自己的！
 const SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
 
@@ -524,14 +524,14 @@ function switchTab(tab) {
         setTimeout(() => document.getElementById('admin-password').focus(), 100);
         return;
     }
-    
+
     document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active');
         if (t.dataset.tab === tab) t.classList.add('active');
     });
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
-    
+
     if (tab === 'join') {
         updateJoinCount();
     }
@@ -571,17 +571,17 @@ async function loadParticipants() {
         showSyncStatus('数据库未配置', false);
         return;
     }
-    
+
     showSyncStatus('同步中...', true);
-    
+
     try {
         const { data, error } = await supabase
             .from('participants')
             .select('*')
             .order('created_at', { ascending: true });
-        
+
         if (error) throw error;
-        
+
         renderParticipantList(data || []);
         updateJoinCountDisplay(data ? data.length : 0);
         showSyncStatus('已同步', true);
@@ -594,41 +594,41 @@ async function loadParticipants() {
 async function submitJoin() {
     const nameInput = document.getElementById('participant-name');
     const name = nameInput.value.trim();
-    
+
     if (!name) {
         alert('请输入姓名');
         return;
     }
-    
+
     if (!supabase) {
         alert('数据库未配置，请检查 Supabase 设置');
         return;
     }
-    
+
     try {
         // 检查重名
         const { data: existing } = await supabase
             .from('participants')
             .select('name')
             .eq('name', name);
-        
+
         if (existing && existing.length > 0) {
             alert('该姓名已报名，请勿重复提交');
             return;
         }
-        
+
         const { error } = await supabase
             .from('participants')
             .insert([{ name: name }]);
-        
+
         if (error) throw error;
-        
+
         nameInput.value = '';
         const success = document.getElementById('join-success');
         success.style.display = 'block';
         updateJoinCount();
         setTimeout(() => { success.style.display = 'none'; }, 3000);
-        
+
     } catch (e) {
         console.error('提交失败:', e);
         alert('报名失败: ' + e.message);
@@ -637,15 +637,15 @@ async function submitJoin() {
 
 async function deletePerson(id) {
     if (!confirm('确定删除该人员？')) return;
-    
+
     if (!supabase) return;
-    
+
     try {
         const { error } = await supabase
             .from('participants')
             .delete()
             .eq('id', id);
-        
+
         if (error) throw error;
         loadParticipants();
     } catch (e) {
@@ -655,15 +655,15 @@ async function deletePerson(id) {
 
 async function clearAll() {
     if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
-    
+
     if (!supabase) return;
-    
+
     try {
         const { error } = await supabase
             .from('participants')
             .delete()
-            .neq('id', 0); // 删除所有
-        
+            .neq('id', 0);
+
         if (error) throw error;
         loadParticipants();
         updateJoinCount();
@@ -675,7 +675,7 @@ async function clearAll() {
 // ==================== 界面渲染 ====================
 function renderParticipantList(data) {
     const listEl = document.getElementById('participant-list');
-    
+
     if (!data || data.length === 0) {
         listEl.innerHTML = `
             <div class="empty-state">
@@ -705,6 +705,7 @@ function updateJoinCountDisplay(count) {
     document.getElementById('join-count').textContent = count;
 }
 
+// ⚠️ 修复：去掉 head: true，直接查询数据
 async function updateJoinCount() {
     if (!supabase) {
         document.getElementById('join-count').textContent = '0';
@@ -713,11 +714,12 @@ async function updateJoinCount() {
     try {
         const { data, error } = await supabase
             .from('participants')
-            .select('*', { count: 'exact', head: true });
-        
+            .select('*');
+
         if (error) throw error;
-        document.getElementById('join-count').textContent = data.length || 0;
+        document.getElementById('join-count').textContent = data ? data.length : 0;
     } catch (e) {
+        console.error(e);
         document.getElementById('join-count').textContent = '0';
     }
 }
@@ -734,37 +736,37 @@ async function generateGroups() {
         alert('数据库未配置');
         return;
     }
-    
+
     const size = parseInt(document.getElementById('group-size').value);
     if (!size || size < 2) {
         alert('每组人数至少为2人');
         return;
     }
-    
+
     try {
         const { data, error } = await supabase
             .from('participants')
             .select('*');
-        
+
         if (error) throw error;
-        
+
         if (!data || data.length === 0) {
             alert('暂无报名人员');
             return;
         }
-        
+
         // Fisher-Yates 洗牌
         const shuffled = [...data];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-        
+
         const groups = [];
         for (let i = 0; i < shuffled.length; i += size) {
             groups.push(shuffled.slice(i, i + size));
         }
-        
+
         renderGroups(groups);
         updateGroupNum(groups.length);
     } catch (e) {
@@ -775,7 +777,7 @@ async function generateGroups() {
 function renderGroups(groups) {
     const container = document.getElementById('group-result');
     if (!groups || groups.length === 0) return;
-    
+
     container.innerHTML = `
         <div style="margin-bottom: 12px; font-weight: 600; color: #333;">
             分组结果（共 ${groups.length} 组）：
@@ -802,14 +804,14 @@ function updateGroupNum(num) {
 function copyResult() {
     const cards = document.querySelectorAll('.group-card');
     if (cards.length === 0) return;
-    
+
     let text = '🎲 随机分组结果：\n\n';
     cards.forEach((card, idx) => {
         const title = card.querySelector('.group-title').textContent.trim();
         const members = Array.from(card.querySelectorAll('.member-tag')).map(t => t.textContent).join('、');
         text += `${title}：${members}\n`;
     });
-    
+
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => alert('已复制到剪贴板'));
     } else {
@@ -827,9 +829,9 @@ function copyResult() {
 function generateQR() {
     const qrcodeContainer = document.getElementById('qrcode');
     qrcodeContainer.innerHTML = '';
-    
+
     const url = window.location.href.split('?')[0].split('#')[0];
-    
+
     new QRCode(qrcodeContainer, {
         text: url,
         width: 180,
