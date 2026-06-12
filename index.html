@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智能分组工具</title>
+    <title>智能分组工具 - 云端版</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -359,15 +360,31 @@
         .admin-link:hover {
             color: #4f46e5;
         }
-        .deploy-warning {
-            background: #fffbeb;
-            color: #92400e;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            margin-bottom: 16px;
+        .sync-status {
             text-align: center;
-            border: 1px solid #fcd34d;
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+        .sync-status.online {
+            color: #10b981;
+        }
+        .sync-status.offline {
+            color: #ef4444;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e8e8e8;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -430,14 +447,14 @@
                 <div id="qrcode"></div>
                 <div class="qr-tip">📲 让参与者扫描上方二维码报名</div>
                 <div class="copy-hint">或复制当前页面链接分享给参与者</div>
-                <div class="deploy-warning" id="deploy-warning" style="display:none;">
-                    ⚠️ 当前为本地文件打开，二维码无效。<br>请部署到服务器后使用。
-                </div>
             </div>
         </div>
 
         <div class="card">
-            <h3 style="margin-bottom: 16px;">👥 报名名单</h3>
+            <h3 style="margin-bottom: 16px;">
+                👥 报名名单
+                <span id="sync-indicator" class="sync-status">同步中...</span>
+            </h3>
             <div class="participant-list" id="participant-list">
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -483,33 +500,23 @@
 </div>
 
 <script>
-// ==================== 数据存储 ====================
-const STORAGE_KEY = 'grouping_app_data_v2';
+// ==================== Supabase 配置 ====================
+// ⚠️ 把下面两个值替换成你自己的！
+const SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
+
+// 初始化 Supabase 客户端
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+    console.error('Supabase 初始化失败:', e);
+}
+
 const ADMIN_PASSWORD = '1234';
-
-function getData() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-    } catch (e) {
-        console.error('Storage error:', e);
-    }
-    return { participants: [], groups: null, groupSize: 4 };
-}
-
-function saveData(data) {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        return true;
-    } catch (e) {
-        alert('存储失败，请检查浏览器是否禁用本地存储');
-        return false;
-    }
-}
 
 // ==================== 页面切换 ====================
 function switchTab(tab) {
-    // 如果是切换到管理页，先显示密码弹窗
     if (tab === 'admin') {
         const mask = document.getElementById('password-mask');
         mask.classList.add('show');
@@ -518,7 +525,6 @@ function switchTab(tab) {
         return;
     }
     
-    // 切换到join页面
     document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active');
         if (t.dataset.tab === tab) t.classList.add('active');
@@ -532,9 +538,7 @@ function switchTab(tab) {
 }
 
 function backToJoin() {
-    // 关闭密码弹窗
     document.getElementById('password-mask').classList.remove('show');
-    // 切换到报名页面
     document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active');
         if (t.dataset.tab === 'join') t.classList.add('active');
@@ -548,27 +552,46 @@ function checkPassword() {
     const input = document.getElementById('admin-password').value;
     if (input === ADMIN_PASSWORD) {
         document.getElementById('password-mask').classList.remove('show');
-        // 激活管理tab
         document.querySelectorAll('.nav-tab').forEach(t => {
             t.classList.remove('active');
             if (t.dataset.tab === 'admin') t.classList.add('active');
         });
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById('admin-section').classList.add('active');
-        renderAdmin();
+        loadParticipants();
         generateQR();
     } else {
         alert('密码错误！');
     }
 }
 
-// ==================== 参与者功能 ====================
-function updateJoinCount() {
-    const data = getData();
-    document.getElementById('join-count').textContent = data.participants.length;
+// ==================== 云端数据操作 ====================
+async function loadParticipants() {
+    if (!supabase) {
+        showSyncStatus('数据库未配置', false);
+        return;
+    }
+    
+    showSyncStatus('同步中...', true);
+    
+    try {
+        const { data, error } = await supabase
+            .from('participants')
+            .select('*')
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        renderParticipantList(data || []);
+        updateJoinCountDisplay(data ? data.length : 0);
+        showSyncStatus('已同步', true);
+    } catch (e) {
+        console.error('加载失败:', e);
+        showSyncStatus('同步失败: ' + e.message, false);
+    }
 }
 
-function submitJoin() {
+async function submitJoin() {
     const nameInput = document.getElementById('participant-name');
     const name = nameInput.value.trim();
     
@@ -577,38 +600,83 @@ function submitJoin() {
         return;
     }
     
-    const data = getData();
-    
-    // 检查重名
-    if (data.participants.some(p => p.name === name)) {
-        alert('该姓名已报名，请勿重复提交');
+    if (!supabase) {
+        alert('数据库未配置，请检查 Supabase 设置');
         return;
     }
     
-    data.participants.push({
-        id: Date.now(),
-        name: name,
-        time: new Date().toLocaleString('zh-CN')
-    });
-    
-    if (saveData(data)) {
+    try {
+        // 检查重名
+        const { data: existing } = await supabase
+            .from('participants')
+            .select('name')
+            .eq('name', name);
+        
+        if (existing && existing.length > 0) {
+            alert('该姓名已报名，请勿重复提交');
+            return;
+        }
+        
+        const { error } = await supabase
+            .from('participants')
+            .insert([{ name: name }]);
+        
+        if (error) throw error;
+        
         nameInput.value = '';
         const success = document.getElementById('join-success');
         success.style.display = 'block';
         updateJoinCount();
         setTimeout(() => { success.style.display = 'none'; }, 3000);
+        
+    } catch (e) {
+        console.error('提交失败:', e);
+        alert('报名失败: ' + e.message);
     }
 }
 
-// ==================== 管理功能 ====================
-function renderAdmin() {
-    const data = getData();
+async function deletePerson(id) {
+    if (!confirm('确定删除该人员？')) return;
+    
+    if (!supabase) return;
+    
+    try {
+        const { error } = await supabase
+            .from('participants')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        loadParticipants();
+    } catch (e) {
+        alert('删除失败: ' + e.message);
+    }
+}
+
+async function clearAll() {
+    if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
+    
+    if (!supabase) return;
+    
+    try {
+        const { error } = await supabase
+            .from('participants')
+            .delete()
+            .neq('id', 0); // 删除所有
+        
+        if (error) throw error;
+        loadParticipants();
+        updateJoinCount();
+    } catch (e) {
+        alert('清空失败: ' + e.message);
+    }
+}
+
+// ==================== 界面渲染 ====================
+function renderParticipantList(data) {
     const listEl = document.getElementById('participant-list');
-    const countEl = document.getElementById('admin-count');
     
-    countEl.textContent = data.participants.length;
-    
-    if (data.participants.length === 0) {
+    if (!data || data.length === 0) {
         listEl.innerHTML = `
             <div class="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -620,83 +688,88 @@ function renderAdmin() {
                 <div>暂无报名人员</div>
             </div>`;
     } else {
-        listEl.innerHTML = data.participants.map(p => `
+        listEl.innerHTML = data.map(p => `
             <div class="person-item">
                 <div>
                     <div class="person-name">${p.name}</div>
-                    <div class="person-time">${p.time}</div>
+                    <div class="person-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
                 </div>
                 <button class="delete-btn" onclick="deletePerson(${p.id})">删除</button>
             </div>
         `).join('');
     }
-    
-    if (data.groups && data.groups.length > 0) {
-        renderGroups(data.groups);
-        document.getElementById('group-size').value = data.groupSize || 4;
-    } else {
-        document.getElementById('group-result').innerHTML = '';
+}
+
+function updateJoinCountDisplay(count) {
+    document.getElementById('admin-count').textContent = count;
+    document.getElementById('join-count').textContent = count;
+}
+
+async function updateJoinCount() {
+    if (!supabase) {
+        document.getElementById('join-count').textContent = '0';
+        return;
     }
-    
-    updateGroupNum();
+    try {
+        const { data, error } = await supabase
+            .from('participants')
+            .select('*', { count: 'exact', head: true });
+        
+        if (error) throw error;
+        document.getElementById('join-count').textContent = data.length || 0;
+    } catch (e) {
+        document.getElementById('join-count').textContent = '0';
+    }
 }
 
-function deletePerson(id) {
-    if (!confirm('确定删除该人员？')) return;
-    const data = getData();
-    data.participants = data.participants.filter(p => p.id !== id);
-    data.groups = null;
-    saveData(data);
-    renderAdmin();
-}
-
-function clearAll() {
-    if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
-    saveData({ participants: [], groups: null, groupSize: 4 });
-    renderAdmin();
-    updateJoinCount();
-}
-
-function updateGroupNum() {
-    const data = getData();
-    const size = parseInt(document.getElementById('group-size').value) || 4;
-    const num = data.participants.length > 0 ? Math.ceil(data.participants.length / size) : 0;
-    document.getElementById('group-num').textContent = num;
+function showSyncStatus(text, isOnline) {
+    const el = document.getElementById('sync-indicator');
+    el.textContent = text;
+    el.className = 'sync-status ' + (isOnline ? 'online' : 'offline');
 }
 
 // ==================== 随机分组 ====================
-function generateGroups() {
-    const data = getData();
-    const size = parseInt(document.getElementById('group-size').value);
+async function generateGroups() {
+    if (!supabase) {
+        alert('数据库未配置');
+        return;
+    }
     
+    const size = parseInt(document.getElementById('group-size').value);
     if (!size || size < 2) {
         alert('每组人数至少为2人');
         return;
     }
     
-    if (data.participants.length === 0) {
-        alert('暂无报名人员');
-        return;
+    try {
+        const { data, error } = await supabase
+            .from('participants')
+            .select('*');
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            alert('暂无报名人员');
+            return;
+        }
+        
+        // Fisher-Yates 洗牌
+        const shuffled = [...data];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        
+        const groups = [];
+        for (let i = 0; i < shuffled.length; i += size) {
+            groups.push(shuffled.slice(i, i + size));
+        }
+        
+        renderGroups(groups);
+        updateGroupNum(groups.length);
+    } catch (e) {
+        alert('分组失败: ' + e.message);
     }
-    
-    // Fisher-Yates 洗牌
-    const shuffled = [...data.participants];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    
-    const groups = [];
-    for (let i = 0; i < shuffled.length; i += size) {
-        groups.push(shuffled.slice(i, i + size));
-    }
-    
-    data.groups = groups;
-    data.groupSize = size;
-    saveData(data);
-    
-    renderGroups(groups);
-    updateGroupNum();
 }
 
 function renderGroups(groups) {
@@ -722,13 +795,19 @@ function renderGroups(groups) {
     `;
 }
 
+function updateGroupNum(num) {
+    document.getElementById('group-num').textContent = num || 0;
+}
+
 function copyResult() {
-    const data = getData();
-    if (!data.groups) return;
+    const cards = document.querySelectorAll('.group-card');
+    if (cards.length === 0) return;
     
     let text = '🎲 随机分组结果：\n\n';
-    data.groups.forEach((group, idx) => {
-        text += `第 ${idx + 1} 组（${group.length}人）：${group.map(p => p.name).join('、')}\n`;
+    cards.forEach((card, idx) => {
+        const title = card.querySelector('.group-title').textContent.trim();
+        const members = Array.from(card.querySelectorAll('.member-tag')).map(t => t.textContent).join('、');
+        text += `${title}：${members}\n`;
     });
     
     if (navigator.clipboard) {
@@ -751,12 +830,6 @@ function generateQR() {
     
     const url = window.location.href.split('?')[0].split('#')[0];
     
-    // 检测是否为本地文件
-    if (url.startsWith('file://')) {
-        document.getElementById('deploy-warning').style.display = 'block';
-        return;
-    }
-    
     new QRCode(qrcodeContainer, {
         text: url,
         width: 180,
@@ -768,7 +841,12 @@ function generateQR() {
 }
 
 // ==================== 初始化 ====================
-document.getElementById('group-size').addEventListener('input', updateGroupNum);
+document.getElementById('group-size').addEventListener('input', function() {
+    const size = parseInt(this.value) || 4;
+    const count = parseInt(document.getElementById('admin-count').textContent) || 0;
+    const num = count > 0 ? Math.ceil(count / size) : 0;
+    document.getElementById('group-num').textContent = num;
+});
 
 document.getElementById('participant-name').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') submitJoin();
@@ -777,14 +855,17 @@ document.getElementById('admin-password').addEventListener('keypress', function(
     if (e.key === 'Enter') checkPassword();
 });
 
-// 页面加载时默认显示报名页面
+// 页面加载时
 updateJoinCount();
 
-// 防止URL参数导致默认进入管理页
-if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {
-    // 清除参数，强制回到报名页
-    history.replaceState(null, '', window.location.pathname + window.location.search.replace(/[?&]admin/g, ''));
-}
+// 管理员页面自动刷新
+setInterval(() => {
+    if (document.getElementById('admin-section').classList.contains('active')) {
+        loadParticipants();
+    } else {
+        updateJoinCount();
+    }
+}, 3000); // 每3秒自动同步
 </script>
 
 </body>
