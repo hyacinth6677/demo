@@ -3,330 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智能分组工具 - 云端版</title>
+    <title>分组工具 - 云端版</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f0f2f5;
-            color: #333;
-            line-height: 1.6;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
-        h1 {
-            font-size: 24px;
-            text-align: center;
-            margin-bottom: 8px;
-            color: #1a1a1a;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            font-size: 15px;
-            color: #444;
-        }
-        input[type="text"],
-        input[type="number"],
-        input[type="password"] {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e8e8e8;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s;
-            -webkit-appearance: none;
-        }
-        input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            background: #fafaff;
-        }
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            -webkit-appearance: none;
-        }
-        .btn-primary {
-            background: #4f46e5;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-        .btn-primary:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
-        }
-        .btn-secondary {
-            background: #fff;
-            color: #4f46e5;
-            border: 2px solid #4f46e5;
-            margin-top: 12px;
-        }
-        .btn-danger {
-            background: #ef4444;
-            color: #fff;
-            margin-top: 12px;
-        }
-        .btn-success {
-            background: #10b981;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-        .success-msg {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 500;
-            display: none;
-            animation: slideIn 0.3s ease;
-        }
-        .error-msg {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 16px;
-            font-size: 14px;
-            display: none;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-        }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-num {
-            font-size: 32px;
-            font-weight: 700;
-            color: #4f46e5;
-        }
-        .stat-label {
-            font-size: 13px;
-            color: #666;
-            margin-top: 4px;
-        }
-        .participant-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-        .person-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            animation: slideIn 0.3s ease;
-        }
-        .person-name {
-            font-weight: 500;
-            font-size: 16px;
-        }
-        .person-time {
-            font-size: 12px;
-            color: #999;
-        }
-        .delete-btn {
-            background: #fee2e2;
-            color: #ef4444;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-        }
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.3;
-        }
-        .group-config {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-        }
-        .group-config .input-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-        .group-result {
-            margin-top: 20px;
-        }
-        .group-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            position: relative;
-            overflow: hidden;
-        }
-        .group-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .group-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .group-members {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .member-tag {
-            background: rgba(255,255,255,0.25);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 14px;
-            backdrop-filter: blur(10px);
-        }
-        .qr-section {
-            text-align: center;
-            padding: 20px;
-        }
-        #qrcode {
-            display: inline-block;
-            padding: 16px;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 12px;
-        }
-        .qr-tip {
-            font-size: 14px;
-            color: #666;
-        }
-        .nav-tabs {
-            display: flex;
-            background: #fff;
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .nav-tab {
-            flex: 1;
-            text-align: center;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            background: transparent;
-            color: #666;
-        }
-        .nav-tab.active {
-            background: #4f46e5;
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
-        }
-        .section {
-            display: none;
-        }
-        .section.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .password-mask {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-        .password-mask.show {
-            display: flex;
-        }
-        .password-card {
-            background: #fff;
-            padding: 32px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-        }
-        .password-card h2 {
-            margin-bottom: 8px;
-        }
-        .password-card p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        h1 { font-size: 24px; text-align: center; margin-bottom: 8px; color: #1a1a1a; }
+        .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 15px; color: #444; }
+        input[type="text"], input[type="number"], input[type="password"] { width: 100%; padding: 14px 16px; border: 2px solid #e8e8e8; border-radius: 12px; font-size: 16px; transition: all 0.3s; -webkit-appearance: none; }
+        input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.3s; -webkit-appearance: none; }
+        .btn-primary { background: #4f46e5; color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2); }
+        .btn-secondary { background: #fff; color: #4f46e5; border: 2px solid #4f46e5; margin-top: 12px; }
+        .btn-danger { background: #ef4444; color: #fff; margin-top: 12px; }
+        .btn-success { background: #10b981; color: #fff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-small { padding: 8px 14px; font-size: 14px; width: auto; display: inline-block; margin-top: 0; }
+        .success-msg { background: #d1fae5; color: #065f46; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-weight: 500; display: none; animation: slideIn 0.3s ease; }
+        .error-msg { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 16px; font-size: 14px; display: none; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .stat-item { text-align: center; }
+        .stat-num { font-size: 32px; font-weight: 700; color: #4f46e5; }
+        .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
+        .participant-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
+        .person-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; animation: slideIn 0.3s ease; }
+        .person-name { font-weight: 500; font-size: 16px; }
+        .person-time { font-size: 12px; color: #999; }
+        .delete-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+        .edit-btn { background: #dbeafe; color: #2563eb; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
+        .save-btn { background: #d1fae5; color: #065f46; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
+        .group-config { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
+        .group-config .input-group { flex: 1; margin-bottom: 0; }
+        .group-result { margin-top: 20px; }
+        .group-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
+        .group-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); pointer-events: none; }
+        .group-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .group-members { display: flex; flex-wrap: wrap; gap: 8px; }
+        .member-tag { background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 14px; backdrop-filter: blur(10px); }
+        .qr-section { text-align: center; padding: 20px; }
+        #qrcode { display: inline-block; padding: 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 12px; }
+        .qr-tip { font-size: 14px; color: #666; }
+        .nav-tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .nav-tab { flex: 1; text-align: center; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s; border: none; background: transparent; color: #666; }
+        .nav-tab.active { background: #4f46e5; color: #fff; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .password-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .password-mask.show { display: flex; }
+        .password-card { background: #fff; padding: 32px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; }
+        .password-card h2 { margin-bottom: 8px; }
+        .password-card p { color: #666; font-size: 14px; margin-bottom: 20px; }
         .hidden { display: none !important; }
-
         .group-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .group-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
         .group-color-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -335,64 +71,32 @@
         .group-color-5 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
         .group-color-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333 !important; }
         .group-color-7 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333 !important; }
-
-        .copy-hint {
-            font-size: 12px;
-            color: #999;
-            text-align: center;
-            margin-top: 8px;
-        }
-        .admin-hint {
-            text-align: center;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid #eee;
-        }
-        .admin-link {
-            color: #999;
-            font-size: 13px;
-            text-decoration: none;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 8px 16px;
-        }
-        .admin-link:hover {
-            color: #4f46e5;
-        }
-        .sync-status {
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            margin-top: 8px;
-        }
-        .sync-status.online {
-            color: #10b981;
-        }
-        .sync-status.offline {
-            color: #ef4444;
-        }
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e8e8e8;
-            border-top: 2px solid #4f46e5;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 8px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .copy-hint { font-size: 12px; color: #999; text-align: center; margin-top: 8px; }
+        .admin-hint { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; }
+        .admin-link { color: #999; font-size: 13px; text-decoration: none; cursor: pointer; background: none; border: none; padding: 8px 16px; }
+        .admin-link:hover { color: #4f46e5; }
+        .sync-status { text-align: center; font-size: 12px; color: #999; margin-top: 8px; }
+        .sync-status.online { color: #10b981; }
+        .sync-status.offline { color: #ef4444; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label { font-size: 15px; color: #333; }
+        .toggle-desc { font-size: 12px; color: #999; margin-top: 2px; }
+        .toggle-switch { position: relative; width: 48px; height: 26px; background: #e5e7eb; border-radius: 13px; cursor: pointer; transition: all 0.3s; -webkit-appearance: none; appearance: none; border: none; }
+        .toggle-switch:checked { background: #4f46e5; }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .toggle-switch:checked::after { left: 24px; }
+        .my-records { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .my-records h4 { font-size: 16px; margin-bottom: 12px; color: #333; }
+        .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
+        .record-name { font-weight: 500; }
+        .record-time { font-size: 11px; color: #999; }
+        .record-actions { display: flex; gap: 6px; }
     </style>
-<base target="_blank">
 </head>
 <body>
 
 <div class="container">
-    <!-- 导航 -->
     <div class="nav-tabs" id="nav-tabs">
         <button class="nav-tab active" data-tab="join" onclick="switchTab('join')">📱 扫码报名</button>
         <button class="nav-tab" data-tab="admin" onclick="switchTab('admin')">🔐 管理分组</button>
@@ -403,21 +107,27 @@
         <div class="card">
             <h1>📝 活动报名</h1>
             <p class="subtitle">填写姓名完成报名，等待管理员分组</p>
-
-            <div class="success-msg" id="join-success">
-                ✅ 报名成功！请等待管理员分组
-            </div>
-
+            
+            <div class="success-msg" id="join-success">✅ 报名成功！请等待管理员分组</div>
+            
             <div class="input-group">
                 <label>您的姓名</label>
                 <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
             </div>
-
+            
             <button class="btn btn-primary" onclick="submitJoin()">立即报名</button>
-
+            
             <div style="margin-top: 24px; text-align: center;">
                 <div style="font-size: 13px; color: #999; margin-bottom: 8px;">已报名人数</div>
                 <div style="font-size: 36px; font-weight: 700; color: #4f46e5;" id="join-count">0</div>
+            </div>
+
+            <!-- 我的记录 -->
+            <div class="my-records" id="my-records-area">
+                <h4>📋 我的报名记录</h4>
+                <div id="my-records-list">
+                    <div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>
+                </div>
             </div>
 
             <div class="admin-hint">
@@ -431,19 +141,12 @@
         <div class="card">
             <h1>⚙️ 管理控制台</h1>
             <p class="subtitle">查看报名人员并随机分组</p>
-
+            
             <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-num" id="admin-count">0</div>
-                    <div class="stat-label">报名人数</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-num" id="group-num">0</div>
-                    <div class="stat-label">分组数</div>
-                </div>
+                <div class="stat-item"><div class="stat-num" id="admin-count">0</div><div class="stat-label">报名人数</div></div>
+                <div class="stat-item"><div class="stat-num" id="group-num">0</div><div class="stat-label">分组数</div></div>
             </div>
 
-            <!-- 二维码 -->
             <div class="qr-section">
                 <div id="qrcode"></div>
                 <div class="qr-tip">📲 让参与者扫描上方二维码报名</div>
@@ -451,11 +154,27 @@
             </div>
         </div>
 
+        <!-- 全局设置 -->
         <div class="card">
-            <h3 style="margin-bottom: 16px;">
-                👥 报名名单
-                <span id="sync-indicator" class="sync-status">同步中...</span>
-            </h3>
+            <h3 style="margin-bottom: 16px;">⚙️ 全局设置</h3>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">允许重复提交</div>
+                    <div class="toggle-desc">同一用户可多次报名</div>
+                </div>
+                <input type="checkbox" class="toggle-switch" id="setting-duplicate" onchange="saveSettings()">
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">允许用户修改</div>
+                    <div class="toggle-desc">用户可修改自己提交的姓名</div>
+                </div>
+                <input type="checkbox" class="toggle-switch" id="setting-edit" onchange="saveSettings()">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">👥 报名名单 <span id="sync-indicator" class="sync-status">同步中...</span></h3>
             <div class="participant-list" id="participant-list">
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -479,13 +198,11 @@
                 </div>
                 <button class="btn btn-success" onclick="generateGroups()" style="width: auto; padding: 14px 24px;">开始分组</button>
             </div>
-
             <div class="group-result" id="group-result"></div>
         </div>
     </div>
 </div>
 
-<!-- 密码验证弹窗 -->
 <div class="password-mask" id="password-mask">
     <div class="password-card">
         <h2>🔐 管理员验证</h2>
@@ -494,9 +211,7 @@
             <input type="password" id="admin-password" placeholder="请输入管理密码" maxlength="10">
         </div>
         <button class="btn btn-primary" onclick="checkPassword()">进入管理</button>
-        <div style="margin-top: 12px; font-size: 13px; color: #999; cursor: pointer;" onclick="backToJoin()">
-            ← 返回报名页面
-        </div>
+        <div style="margin-top: 12px; font-size: 13px; color: #999; cursor: pointer;" onclick="backToJoin()">← 返回报名页面</div>
     </div>
 </div>
 
@@ -505,7 +220,6 @@
 const SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
 
-// 初始化 Supabase 客户端
 let supabase;
 try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -514,6 +228,16 @@ try {
 }
 
 const ADMIN_PASSWORD = '1234';
+
+// 用户设备标识（用于区分不同用户）
+let deviceId = localStorage.getItem('grouping_device_id');
+if (!deviceId) {
+    deviceId = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('grouping_device_id', deviceId);
+}
+
+// 全局设置缓存
+let globalSettings = { allow_duplicate: false, allow_edit: false };
 
 // ==================== 页面切换 ====================
 function switchTab(tab) {
@@ -524,16 +248,15 @@ function switchTab(tab) {
         setTimeout(() => document.getElementById('admin-password').focus(), 100);
         return;
     }
-
     document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active');
         if (t.dataset.tab === tab) t.classList.add('active');
     });
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
-
     if (tab === 'join') {
         updateJoinCount();
+        loadMyRecords();
     }
 }
 
@@ -546,6 +269,7 @@ function backToJoin() {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('join-section').classList.add('active');
     updateJoinCount();
+    loadMyRecords();
 }
 
 function checkPassword() {
@@ -558,6 +282,7 @@ function checkPassword() {
         });
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById('admin-section').classList.add('active');
+        loadSettings();
         loadParticipants();
         generateQR();
     } else {
@@ -565,28 +290,46 @@ function checkPassword() {
     }
 }
 
+// ==================== 设置管理 ====================
+async function loadSettings() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
+        if (error) throw error;
+        if (data) {
+            globalSettings = data;
+            document.getElementById('setting-duplicate').checked = data.allow_duplicate;
+            document.getElementById('setting-edit').checked = data.allow_edit;
+        }
+    } catch (e) {
+        console.error('加载设置失败:', e);
+    }
+}
+
+async function saveSettings() {
+    if (!supabase) return;
+    const allowDuplicate = document.getElementById('setting-duplicate').checked;
+    const allowEdit = document.getElementById('setting-edit').checked;
+    try {
+        const { error } = await supabase.from('settings').upsert({ id: 1, allow_duplicate: allowDuplicate, allow_edit: allowEdit });
+        if (error) throw error;
+        globalSettings = { allow_duplicate: allowDuplicate, allow_edit: allowEdit };
+    } catch (e) {
+        alert('保存设置失败: ' + e.message);
+    }
+}
+
 // ==================== 云端数据操作 ====================
 async function loadParticipants() {
-    if (!supabase) {
-        showSyncStatus('数据库未配置', false);
-        return;
-    }
-
+    if (!supabase) { showSyncStatus('数据库未配置', false); return; }
     showSyncStatus('同步中...', true);
-
     try {
-        const { data, error } = await supabase
-            .from('participants')
-            .select('*')
-            .order('created_at', { ascending: true });
-
+        const { data, error } = await supabase.from('participants').select('*').order('created_at', { ascending: true });
         if (error) throw error;
-
         renderParticipantList(data || []);
         updateJoinCountDisplay(data ? data.length : 0);
         showSyncStatus('已同步', true);
     } catch (e) {
-        console.error('加载失败:', e);
         showSyncStatus('同步失败: ' + e.message, false);
     }
 }
@@ -594,58 +337,104 @@ async function loadParticipants() {
 async function submitJoin() {
     const nameInput = document.getElementById('participant-name');
     const name = nameInput.value.trim();
-
-    if (!name) {
-        alert('请输入姓名');
-        return;
-    }
-
-    if (!supabase) {
-        alert('数据库未配置，请检查 Supabase 设置');
-        return;
-    }
+    if (!name) { alert('请输入姓名'); return; }
+    if (!supabase) { alert('数据库未配置'); return; }
 
     try {
-        // 检查重名
-        const { data: existing } = await supabase
-            .from('participants')
-            .select('name')
-            .eq('name', name);
+        // 先刷新设置
+        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const settings = settingsData || { allow_duplicate: false, allow_edit: false };
 
-        if (existing && existing.length > 0) {
-            alert('该姓名已报名，请勿重复提交');
-            return;
+        // 如果不允许重复，检查该设备是否已提交
+        if (!settings.allow_duplicate) {
+            const { data: existing } = await supabase.from('participants').select('id').eq('user_id', deviceId);
+            if (existing && existing.length > 0) {
+                alert('您已报名，请勿重复提交');
+                return;
+            }
         }
 
-        const { error } = await supabase
-            .from('participants')
-            .insert([{ name: name }]);
-
+        const { error } = await supabase.from('participants').insert([{ name: name, user_id: deviceId }]);
         if (error) throw error;
 
         nameInput.value = '';
-        const success = document.getElementById('join-success');
-        success.style.display = 'block';
+        document.getElementById('join-success').style.display = 'block';
         updateJoinCount();
-        setTimeout(() => { success.style.display = 'none'; }, 3000);
-
+        loadMyRecords();
+        setTimeout(() => { document.getElementById('join-success').style.display = 'none'; }, 3000);
     } catch (e) {
-        console.error('提交失败:', e);
         alert('报名失败: ' + e.message);
+    }
+}
+
+async function loadMyRecords() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
+        if (error) throw error;
+
+        const container = document.getElementById('my-records-list');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
+            return;
+        }
+
+        // 刷新设置以确定是否显示编辑按钮
+        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const allowEdit = settingsData ? settingsData.allow_edit : false;
+
+        container.innerHTML = data.map(p => `
+            <div class="record-item" id="record-${p.id}">
+                <div>
+                    <div class="record-name" id="name-display-${p.id}">${p.name}</div>
+                    <div class="record-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
+                </div>
+                <div class="record-actions">
+                    ${allowEdit ? `<button class="edit-btn" onclick="startEdit(${p.id}, '${p.name}')">✏️ 修改</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('加载我的记录失败:', e);
+    }
+}
+
+function startEdit(id, oldName) {
+    const displayEl = document.getElementById(`name-display-${id}`);
+    const parent = displayEl.parentElement.parentElement;
+    const actions = parent.querySelector('.record-actions');
+
+    displayEl.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldName;
+    input.style = 'padding:6px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:14px; width:120px;';
+    input.id = `edit-input-${id}`;
+    displayEl.parentElement.insertBefore(input, displayEl);
+
+    actions.innerHTML = `<button class="save-btn" onclick="saveEdit(${id})">💾 保存</button>`;
+}
+
+async function saveEdit(id) {
+    const input = document.getElementById(`edit-input-${id}`);
+    const newName = input.value.trim();
+    if (!newName) { alert('姓名不能为空'); return; }
+
+    try {
+        const { error } = await supabase.from('participants').update({ name: newName }).eq('id', id);
+        if (error) throw error;
+        loadMyRecords();
+        updateJoinCount();
+    } catch (e) {
+        alert('修改失败: ' + e.message);
     }
 }
 
 async function deletePerson(id) {
     if (!confirm('确定删除该人员？')) return;
-
     if (!supabase) return;
-
     try {
-        const { error } = await supabase
-            .from('participants')
-            .delete()
-            .eq('id', id);
-
+        const { error } = await supabase.from('participants').delete().eq('id', id);
         if (error) throw error;
         loadParticipants();
     } catch (e) {
@@ -655,18 +444,13 @@ async function deletePerson(id) {
 
 async function clearAll() {
     if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
-
     if (!supabase) return;
-
     try {
-        const { error } = await supabase
-            .from('participants')
-            .delete()
-            .neq('id', 0);
-
+        const { error } = await supabase.from('participants').delete().neq('id', 0);
         if (error) throw error;
         loadParticipants();
         updateJoinCount();
+        loadMyRecords();
     } catch (e) {
         alert('清空失败: ' + e.message);
     }
@@ -675,28 +459,10 @@ async function clearAll() {
 // ==================== 界面渲染 ====================
 function renderParticipantList(data) {
     const listEl = document.getElementById('participant-list');
-
     if (!data || data.length === 0) {
-        listEl.innerHTML = `
-            <div class="empty-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <div>暂无报名人员</div>
-            </div>`;
+        listEl.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无报名人员</div></div>`;
     } else {
-        listEl.innerHTML = data.map(p => `
-            <div class="person-item">
-                <div>
-                    <div class="person-name">${p.name}</div>
-                    <div class="person-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
-                </div>
-                <button class="delete-btn" onclick="deletePerson(${p.id})">删除</button>
-            </div>
-        `).join('');
+        listEl.innerHTML = data.map(p => `<div class="person-item"><div><div class="person-name">${p.name}</div><div class="person-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div></div><button class="delete-btn" onclick="deletePerson(${p.id})">删除</button></div>`).join('');
     }
 }
 
@@ -705,23 +471,13 @@ function updateJoinCountDisplay(count) {
     document.getElementById('join-count').textContent = count;
 }
 
-// ⚠️ 修复：去掉 head: true，直接查询数据
 async function updateJoinCount() {
-    if (!supabase) {
-        document.getElementById('join-count').textContent = '0';
-        return;
-    }
+    if (!supabase) { document.getElementById('join-count').textContent = '0'; return; }
     try {
-        const { data, error } = await supabase
-            .from('participants')
-            .select('*');
-
+        const { data, error } = await supabase.from('participants').select('*');
         if (error) throw error;
         document.getElementById('join-count').textContent = data ? data.length : 0;
-    } catch (e) {
-        console.error(e);
-        document.getElementById('join-count').textContent = '0';
-    }
+    } catch (e) { document.getElementById('join-count').textContent = '0'; }
 }
 
 function showSyncStatus(text, isOnline) {
@@ -732,88 +488,44 @@ function showSyncStatus(text, isOnline) {
 
 // ==================== 随机分组 ====================
 async function generateGroups() {
-    if (!supabase) {
-        alert('数据库未配置');
-        return;
-    }
-
+    if (!supabase) { alert('数据库未配置'); return; }
     const size = parseInt(document.getElementById('group-size').value);
-    if (!size || size < 2) {
-        alert('每组人数至少为2人');
-        return;
-    }
-
+    if (!size || size < 2) { alert('每组至少2人'); return; }
     try {
-        const { data, error } = await supabase
-            .from('participants')
-            .select('*');
-
+        const { data, error } = await supabase.from('participants').select('*');
         if (error) throw error;
-
-        if (!data || data.length === 0) {
-            alert('暂无报名人员');
-            return;
-        }
-
-        // Fisher-Yates 洗牌
+        if (!data || data.length === 0) { alert('暂无报名人员'); return; }
         const shuffled = [...data];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-
         const groups = [];
-        for (let i = 0; i < shuffled.length; i += size) {
-            groups.push(shuffled.slice(i, i + size));
-        }
-
+        for (let i = 0; i < shuffled.length; i += size) groups.push(shuffled.slice(i, i + size));
         renderGroups(groups);
         updateGroupNum(groups.length);
-    } catch (e) {
-        alert('分组失败: ' + e.message);
-    }
+    } catch (e) { alert('分组失败: ' + e.message); }
 }
 
 function renderGroups(groups) {
     const container = document.getElementById('group-result');
     if (!groups || groups.length === 0) return;
-
-    container.innerHTML = `
-        <div style="margin-bottom: 12px; font-weight: 600; color: #333;">
-            分组结果（共 ${groups.length} 组）：
-        </div>
-        ${groups.map((group, idx) => `
-            <div class="group-card group-color-${idx % 8}">
-                <div class="group-title">
-                    <span>第 ${idx + 1} 组</span>
-                    <span style="font-size: 14px; opacity: 0.9;">(${group.length}人)</span>
-                </div>
-                <div class="group-members">
-                    ${group.map(p => `<span class="member-tag">${p.name}</span>`).join('')}
-                </div>
-            </div>
-        `).join('')}
-        <button class="btn btn-secondary" onclick="copyResult()">📋 复制分组结果</button>
-    `;
+    container.innerHTML = `<div style="margin-bottom: 12px; font-weight: 600; color: #333;">分组结果（共 ${groups.length} 组）：</div>` + groups.map((group, idx) => `<div class="group-card group-color-${idx % 8}"><div class="group-title"><span>第 ${idx + 1} 组</span><span style="font-size: 14px; opacity: 0.9;">(${group.length}人)</span></div><div class="group-members">${group.map(p => `<span class="member-tag">${p.name}</span>`).join('')}</div></div>`).join('') + `<button class="btn btn-secondary" onclick="copyResult()">📋 复制分组结果</button>`;
 }
 
-function updateGroupNum(num) {
-    document.getElementById('group-num').textContent = num || 0;
-}
+function updateGroupNum(num) { document.getElementById('group-num').textContent = num || 0; }
 
 function copyResult() {
     const cards = document.querySelectorAll('.group-card');
     if (cards.length === 0) return;
-
     let text = '🎲 随机分组结果：\n\n';
     cards.forEach((card, idx) => {
         const title = card.querySelector('.group-title').textContent.trim();
         const members = Array.from(card.querySelectorAll('.member-tag')).map(t => t.textContent).join('、');
         text += `${title}：${members}\n`;
     });
-
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => alert('已复制到剪贴板'));
+        navigator.clipboard.writeText(text).then(() => alert('已复制'));
     } else {
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -821,54 +533,38 @@ function copyResult() {
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        alert('已复制到剪贴板');
+        alert('已复制');
     }
 }
 
-// ==================== 二维码 ====================
 function generateQR() {
     const qrcodeContainer = document.getElementById('qrcode');
     qrcodeContainer.innerHTML = '';
-
     const url = window.location.href.split('?')[0].split('#')[0];
-
-    new QRCode(qrcodeContainer, {
-        text: url,
-        width: 180,
-        height: 180,
-        colorDark: '#1a1a1a',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-    });
+    new QRCode(qrcodeContainer, { text: url, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
 }
 
 // ==================== 初始化 ====================
 document.getElementById('group-size').addEventListener('input', function() {
     const size = parseInt(this.value) || 4;
     const count = parseInt(document.getElementById('admin-count').textContent) || 0;
-    const num = count > 0 ? Math.ceil(count / size) : 0;
-    document.getElementById('group-num').textContent = num;
+    document.getElementById('group-num').textContent = count > 0 ? Math.ceil(count / size) : 0;
 });
+document.getElementById('participant-name').addEventListener('keypress', function(e) { if (e.key === 'Enter') submitJoin(); });
+document.getElementById('admin-password').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPassword(); });
 
-document.getElementById('participant-name').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') submitJoin();
-});
-document.getElementById('admin-password').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') checkPassword();
-});
-
-// 页面加载时
 updateJoinCount();
+loadMyRecords();
 
-// 管理员页面自动刷新
 setInterval(() => {
     if (document.getElementById('admin-section').classList.contains('active')) {
         loadParticipants();
+        loadSettings();
     } else {
         updateJoinCount();
+        loadMyRecords();
     }
-}, 3000); // 每3秒自动同步
+}, 3000);
 </script>
-
 </body>
 </html>
