@@ -33,6 +33,8 @@
             margin-bottom: 20px; font-weight: 500; display: none; animation: slideIn 0.3s ease; }
         .info-msg { background: #dbeafe; color: #1e40af; padding: 16px; border-radius: 12px; text-align: center;
             margin-bottom: 20px; font-weight: 500; display: none; }
+        .error-banner { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 12px; text-align: center;
+            margin-bottom: 16px; font-size: 14px; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
         .stat-item { text-align: center; }
@@ -59,7 +61,7 @@
         .group-members { display: flex; flex-wrap: wrap; gap: 8px; }
         .member-tag { background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 14px; }
         .qr-section { text-align: center; padding: 20px; }
-        #qrcode { display: inline-block; padding: 16px; background: #fff; border-radius: 16px;
+        #qrcode-admin, #qrcode-join { display: inline-block; padding: 16px; background: #fff; border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 12px; }
         .qr-tip { font-size: 14px; color: #666; }
         .nav-tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
@@ -114,11 +116,6 @@
         .lottery-result .emoji { font-size: 64px; margin-bottom: 16px; }
         .lottery-result .text { font-size: 24px; font-weight: 700; color: #4f46e5; }
         .lottery-result .sub { font-size: 14px; color: #666; margin-top: 8px; }
-        .form-field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-        .form-field-row input { flex: 1; }
-        .form-field-row .toggle-switch { width: 40px; height: 22px; flex-shrink: 0; }
-        .form-field-row .toggle-switch::after { width: 18px; height: 18px; }
-        .form-field-row .toggle-switch:checked::after { left: 20px; }
         .draw-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; font-size: 20px;
             padding: 20px; border-radius: 16px; margin: 20px 0; }
         .draw-btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -139,11 +136,12 @@
             <h1 id="join-title">📝 活动报名</h1>
             <p class="subtitle" id="join-subtitle">填写信息完成报名，等待管理员分组</p>
 
+            <div id="db-error" class="error-banner hidden">⚠️ 数据库连接失败，部分功能不可用</div>
+
             <div class="success-msg" id="join-success">✅ 报名成功！</div>
             <div class="info-msg" id="lottery-pending-msg">⏳ 参与成功，请等待开奖！</div>
 
             <div id="join-form-area">
-                <!-- 动态表单字段插入这里 -->
                 <div class="input-group">
                     <label>姓名 <span style="color:#ef4444">*</span></label>
                     <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
@@ -163,7 +161,6 @@
                 <div style="font-size: 36px; font-weight: 700; color: #4f46e5;" id="join-count">0</div>
             </div>
 
-            <!-- 二维码放在报名主页 -->
             <div class="qr-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee;">
                 <div id="qrcode-join"></div>
                 <div class="qr-tip" id="qr-tip">📲 扫描上方二维码参与</div>
@@ -187,6 +184,8 @@
         <div class="card">
             <h1>⚙️ 管理控制台</h1>
             <p class="subtitle">选择活动模式并管理数据</p>
+
+            <div id="admin-db-error" class="error-banner hidden">⚠️ 数据库连接失败</div>
 
             <div class="stats">
                 <div class="stat-item"><div class="stat-num" id="admin-count">0</div><div class="stat-label" id="admin-count-label">报名人数</div></div>
@@ -218,7 +217,7 @@
             </div>
         </div>
 
-        <!-- 分组设置（仅分组模式显示） -->
+        <!-- 分组设置 -->
         <div id="group-settings" class="card">
             <h3 style="margin-bottom: 16px;">⚙️ 分组设置</h3>
             <div class="toggle-row">
@@ -239,7 +238,7 @@
             <div class="group-result" id="group-result"></div>
         </div>
 
-        <!-- 抽奖设置（仅抽奖模式显示） -->
+        <!-- 抽奖设置 -->
         <div id="lottery-settings" class="card hidden">
             <h3 style="margin-bottom: 16px;">🎰 抽奖设置</h3>
 
@@ -267,7 +266,7 @@
             </div>
             <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
                 <input type="text" id="field-label" placeholder="字段名称（如：手机号）" style="flex:2;">
-                <input type="text" id="field-key" placeholder="字段标识（如：phone）" style="flex:1;">
+                <input type="text" id="field-key" placeholder="标识（如：phone）" style="flex:1;">
                 <label style="display:flex; align-items:center; gap:4px; font-size:13px; white-space:nowrap;">
                     <input type="checkbox" id="field-required" style="width:auto;"> 必填
                 </label>
@@ -279,7 +278,7 @@
             </button>
         </div>
 
-        <!-- 名单（分组模式） -->
+        <!-- 分组名单 -->
         <div id="group-participants-card" class="card">
             <h3 style="margin-bottom: 16px;">👥 报名名单 <span id="sync-indicator" class="sync-status">同步中...</span></h3>
             <div class="participant-list" id="participant-list">
@@ -288,7 +287,7 @@
             <button class="btn btn-danger" onclick="clearAll()" style="font-size: 14px; padding: 12px;">🗑️ 清空所有数据</button>
         </div>
 
-        <!-- 抽奖名单（抽奖模式） -->
+        <!-- 抽奖名单 -->
         <div id="lottery-participants-card" class="card hidden">
             <h3 style="margin-bottom: 16px;">🎰 抽奖名单 <span id="lottery-sync-indicator" class="sync-status">同步中...</span></h3>
             <div class="lottery-list" id="lottery-list">
@@ -316,17 +315,26 @@
 const SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
 
-let supabase;
+let supabase = null;
+let dbReady = false;
+
 try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (window.supabase && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        dbReady = true;
+    } else {
+        console.error('Supabase 库未加载');
+    }
 } catch (e) {
     console.error('Supabase 初始化失败:', e);
 }
 
 const ADMIN_PASSWORD = '1234';
+
+// 兼容的设备ID生成（不使用 crypto.randomUUID）
 let deviceId = localStorage.getItem('grouping_device_id');
 if (!deviceId) {
-    deviceId = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    deviceId = Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9) + '-' + Math.random().toString(36).substr(2, 5);
     localStorage.setItem('grouping_device_id', deviceId);
 }
 
@@ -349,9 +357,7 @@ function switchTab(tab) {
     });
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
-    if (tab === 'join') {
-        refreshJoinPage();
-    }
+    if (tab === 'join') refreshJoinPage();
 }
 
 function backToJoin() {
@@ -383,21 +389,20 @@ function checkPassword() {
 
 // ==================== 模式管理 ====================
 async function setMode(mode) {
-    if (!supabase) return;
+    if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
     try {
         const { error } = await supabase.from('settings').upsert({ id: 1, mode: mode });
         if (error) throw error;
         globalSettings.mode = mode;
         updateModeUI();
         refreshJoinPage();
-        loadAdminData();
     } catch (e) {
         alert('切换模式失败: ' + e.message);
     }
 }
 
 async function setLotteryType(type) {
-    if (!supabase) return;
+    if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
     try {
         const { error } = await supabase.from('settings').upsert({ id: 1, lottery_type: type });
         if (error) throw error;
@@ -431,12 +436,16 @@ function updateLotteryTypeUI() {
 
 // ==================== 加载管理数据 ====================
 async function loadAdminData() {
+    if (!dbReady || !supabase) {
+        document.getElementById('admin-db-error').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('admin-db-error').classList.add('hidden');
     await loadSettings();
     updateModeUI();
     updateLotteryTypeUI();
     if (globalSettings.mode === 'group') {
         loadParticipants();
-        loadGroupSettings();
     } else {
         loadPrizes();
         loadFormFields();
@@ -446,14 +455,17 @@ async function loadAdminData() {
 }
 
 async function loadSettings() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
-        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
         if (error) throw error;
         if (data) {
             globalSettings = { ...globalSettings, ...data };
             document.getElementById('setting-duplicate').checked = data.allow_duplicate || false;
             document.getElementById('setting-edit').checked = data.allow_edit || false;
+        } else {
+            // 无数据则插入默认
+            await supabase.from('settings').insert({ id: 1, mode: 'group', lottery_type: 'realtime', allow_duplicate: false, allow_edit: false });
         }
     } catch (e) {
         console.error('加载设置失败:', e);
@@ -461,16 +473,13 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     const allowDuplicate = document.getElementById('setting-duplicate').checked;
     const allowEdit = document.getElementById('setting-edit').checked;
     try {
         const { error } = await supabase.from('settings').upsert({
-            id: 1,
-            allow_duplicate: allowDuplicate,
-            allow_edit: allowEdit,
-            mode: globalSettings.mode,
-            lottery_type: globalSettings.lottery_type
+            id: 1, allow_duplicate: allowDuplicate, allow_edit: allowEdit,
+            mode: globalSettings.mode, lottery_type: globalSettings.lottery_type
         });
         if (error) throw error;
         globalSettings.allow_duplicate = allowDuplicate;
@@ -480,13 +489,9 @@ async function saveSettings() {
     }
 }
 
-function loadGroupSettings() {
-    // 分组模式下的设置已在 loadSettings 中加载
-}
-
-// ==================== 分组功能（原有） ====================
+// ==================== 分组功能 ====================
 async function loadParticipants() {
-    if (!supabase) { showSyncStatus('数据库未配置', false); return; }
+    if (!dbReady || !supabase) { showSyncStatus('数据库未就绪', false); return; }
     showSyncStatus('同步中...', true);
     try {
         const { data, error } = await supabase.from('participants').select('*').order('created_at', { ascending: true });
@@ -495,7 +500,7 @@ async function loadParticipants() {
         updateJoinCountDisplay(data ? data.length : 0);
         showSyncStatus('已同步', true);
     } catch (e) {
-        showSyncStatus('同步失败: ' + e.message, false);
+        showSyncStatus('同步失败', false);
     }
 }
 
@@ -507,10 +512,10 @@ async function submitJoin() {
     const nameInput = document.getElementById('participant-name');
     const name = nameInput.value.trim();
     if (!name) { alert('请输入姓名'); return; }
-    if (!supabase) { alert('数据库未配置'); return; }
+    if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
 
     try {
-        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
         const settings = settingsData || { allow_duplicate: false };
         if (!settings.allow_duplicate) {
             const { data: existing } = await supabase.from('participants').select('id').eq('user_id', deviceId);
@@ -530,7 +535,7 @@ async function submitJoin() {
 
 async function deletePerson(id) {
     if (!confirm('确定删除该人员？')) return;
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('participants').delete().eq('id', id);
         if (error) throw error;
@@ -540,7 +545,7 @@ async function deletePerson(id) {
 
 async function clearAll() {
     if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('participants').delete().neq('id', 0);
         if (error) throw error;
@@ -565,7 +570,7 @@ function updateJoinCountDisplay(count) {
 }
 
 async function updateJoinCount() {
-    if (!supabase) { document.getElementById('join-count').textContent = '0'; return; }
+    if (!dbReady || !supabase) { document.getElementById('join-count').textContent = '0'; return; }
     try {
         const { data, error } = await supabase.from('participants').select('*');
         if (error) throw error;
@@ -580,7 +585,7 @@ function showSyncStatus(text, isOnline) {
 }
 
 async function generateGroups() {
-    if (!supabase) { alert('数据库未配置'); return; }
+    if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
     const size = parseInt(document.getElementById('group-size').value);
     if (!size || size < 2) { alert('每组至少2人'); return; }
     try {
@@ -634,7 +639,7 @@ function copyResult() {
 
 // ==================== 抽奖功能 ====================
 async function loadPrizes() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { data, error } = await supabase.from('prizes').select('*').order('created_at', { ascending: true });
         if (error) throw error;
@@ -665,7 +670,7 @@ async function addPrize() {
     const name = document.getElementById('prize-name').value.trim();
     const qty = parseInt(document.getElementById('prize-qty').value) || 1;
     if (!name) { alert('请输入奖品名称'); return; }
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('prizes').insert([{ name: name, quantity: qty, remaining: qty }]);
         if (error) throw error;
@@ -677,7 +682,7 @@ async function addPrize() {
 
 async function deletePrize(id) {
     if (!confirm('确定删除该奖品？')) return;
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('prizes').delete().eq('id', id);
         if (error) throw error;
@@ -685,9 +690,8 @@ async function deletePrize(id) {
     } catch (e) { alert('删除失败: ' + e.message); }
 }
 
-// 表单字段
 async function loadFormFields() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { data, error } = await supabase.from('form_fields').select('*').order('sort_order', { ascending: true });
         if (error) throw error;
@@ -719,7 +723,7 @@ async function addFormField() {
     const key = document.getElementById('field-key').value.trim();
     const required = document.getElementById('field-required').checked;
     if (!label || !key) { alert('请填写字段名称和标识'); return; }
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('form_fields').insert([{ label: label, field_key: key, required: required, sort_order: currentFormFields.length }]);
         if (error) throw error;
@@ -732,7 +736,7 @@ async function addFormField() {
 
 async function deleteFormField(id) {
     if (!confirm('确定删除该字段？')) return;
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('form_fields').delete().eq('id', id);
         if (error) throw error;
@@ -762,9 +766,8 @@ function buildJoinForm() {
 async function submitLottery() {
     const name = document.getElementById('participant-name').value.trim();
     if (!name) { alert('请输入姓名'); return; }
-    if (!supabase) { alert('数据库未配置'); return; }
+    if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
 
-    // 收集自定义字段
     const customData = {};
     for (const f of currentFormFields) {
         const el = document.getElementById(`field-${f.field_key}`);
@@ -774,50 +777,35 @@ async function submitLottery() {
     }
 
     try {
-        // 检查是否已参与
         const { data: existing } = await supabase.from('lottery_participants').select('id').eq('user_id', deviceId);
         if (existing && existing.length > 0) { alert('您已参与，请勿重复提交'); return; }
 
         const isRealtime = globalSettings.lottery_type === 'realtime';
 
         if (isRealtime) {
-            // 实时开奖
             const { data: prizes } = await supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true });
             let prizeName = '未中奖';
             let status = 'lost';
             let wonPrize = null;
 
             if (prizes && prizes.length > 0) {
-                // 随机抽取一个奖品
                 const randomIdx = Math.floor(Math.random() * prizes.length);
                 wonPrize = prizes[randomIdx];
                 prizeName = wonPrize.name;
                 status = 'won';
-                // 减少库存
                 await supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 }).eq('id', wonPrize.id);
             }
 
             const { error } = await supabase.from('lottery_participants').insert([{
-                name: name,
-                user_id: deviceId,
-                custom_data: customData,
-                prize_name: prizeName,
-                status: status
+                name: name, user_id: deviceId, custom_data: customData, prize_name: prizeName, status: status
             }]);
             if (error) throw error;
-
             showLotteryResult(prizeName, status);
         } else {
-            // 手动开奖：先记录，状态 pending
             const { error } = await supabase.from('lottery_participants').insert([{
-                name: name,
-                user_id: deviceId,
-                custom_data: customData,
-                prize_name: null,
-                status: 'pending'
+                name: name, user_id: deviceId, custom_data: customData, prize_name: null, status: 'pending'
             }]);
             if (error) throw error;
-
             document.getElementById('lottery-pending-msg').style.display = 'block';
             setTimeout(() => { document.getElementById('lottery-pending-msg').style.display = 'none'; }, 3000);
         }
@@ -852,38 +840,32 @@ function showLotteryResult(prizeName, status) {
         text.style.color = '#666';
         sub.textContent = '很遗憾，您未中奖';
     }
-
     setTimeout(() => { area.classList.add('hidden'); }, 5000);
 }
 
 async function manualDraw() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     if (!confirm('确定现在开奖？开奖后所有待开奖参与者将随机分配奖品。')) return;
 
     try {
-        // 获取所有 pending 的参与者
         const { data: participants, error: pError } = await supabase.from('lottery_participants').select('*').eq('status', 'pending');
         if (pError) throw pError;
         if (!participants || participants.length === 0) { alert('暂无待开奖参与者'); return; }
 
-        // 获取所有奖品（按剩余数量展开为数组）
         const { data: prizes, error: prError } = await supabase.from('prizes').select('*');
         if (prError) throw prError;
 
-        // 构建奖品池（每个奖品按剩余数量展开）
         let prizePool = [];
         (prizes || []).forEach(p => {
             for (let i = 0; i < p.remaining; i++) prizePool.push(p);
         });
 
-        // 随机打乱参与者
         const shuffled = [...participants];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
 
-        // 分配奖品
         for (let i = 0; i < shuffled.length; i++) {
             const p = shuffled[i];
             if (i < prizePool.length) {
@@ -904,7 +886,7 @@ async function manualDraw() {
 }
 
 async function loadLotteryParticipants() {
-    if (!supabase) { showLotterySyncStatus('数据库未配置', false); return; }
+    if (!dbReady || !supabase) { showLotterySyncStatus('数据库未就绪', false); return; }
     showLotterySyncStatus('同步中...', true);
     try {
         const { data, error } = await supabase.from('lottery_participants').select('*').order('created_at', { ascending: false });
@@ -913,7 +895,7 @@ async function loadLotteryParticipants() {
         updateLotteryCount();
         showLotterySyncStatus('已同步', true);
     } catch (e) {
-        showLotterySyncStatus('同步失败: ' + e.message, false);
+        showLotterySyncStatus('同步失败', false);
     }
 }
 
@@ -948,7 +930,7 @@ function renderLotteryList(data) {
 
 async function deleteLotteryPerson(id) {
     if (!confirm('确定删除该参与者？')) return;
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('lottery_participants').delete().eq('id', id);
         if (error) throw error;
@@ -958,7 +940,7 @@ async function deleteLotteryPerson(id) {
 
 async function clearLottery() {
     if (!confirm('确定清空所有抽奖数据？此操作不可恢复！')) return;
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { error } = await supabase.from('lottery_participants').delete().neq('id', 0);
         if (error) throw error;
@@ -969,7 +951,7 @@ async function clearLottery() {
 }
 
 async function updateLotteryCount() {
-    if (!supabase) { document.getElementById('join-count').textContent = '0'; return; }
+    if (!dbReady || !supabase) { document.getElementById('join-count').textContent = '0'; return; }
     try {
         const { data, error } = await supabase.from('lottery_participants').select('*');
         if (error) throw error;
@@ -985,7 +967,7 @@ function showLotterySyncStatus(text, isOnline) {
 }
 
 async function loadMyLotteryRecords() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { data, error } = await supabase.from('lottery_participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
         if (error) throw error;
@@ -1004,9 +986,9 @@ async function loadMyLotteryRecords() {
     } catch (e) { console.error('加载记录失败:', e); }
 }
 
-// ==================== 我的记录（分组模式） ====================
+// ==================== 我的记录（分组） ====================
 async function loadMyRecords() {
-    if (!supabase) return;
+    if (!dbReady || !supabase) return;
     try {
         const { data, error } = await supabase.from('participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
         if (error) throw error;
@@ -1015,7 +997,7 @@ async function loadMyRecords() {
             container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
             return;
         }
-        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
         const allowEdit = settingsData ? settingsData.allow_edit : false;
         container.innerHTML = data.map(p => `
             <div class="record-item" id="record-${p.id}">
@@ -1074,23 +1056,35 @@ async function saveEdit(id) {
 // ==================== 二维码 ====================
 function generateQRAdmin() {
     const container = document.getElementById('qrcode-admin');
+    if (!container) return;
     container.innerHTML = '';
-    const url = window.location.href.split('?')[0].split('#')[0];
-    new QRCode(container, { text: url, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    try {
+        const url = window.location.href.split('?')[0].split('#')[0];
+        new QRCode(container, { text: url, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) { console.error('QR生成失败:', e); }
 }
 
 function generateQRJoin() {
     const container = document.getElementById('qrcode-join');
+    if (!container) return;
     container.innerHTML = '';
-    const url = window.location.href.split('?')[0].split('#')[0];
-    new QRCode(container, { text: url, width: 160, height: 160, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    try {
+        const url = window.location.href.split('?')[0].split('#')[0];
+        new QRCode(container, { text: url, width: 160, height: 160, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) { console.error('QR生成失败:', e); }
 }
 
 // ==================== 刷新参与页面 ====================
 async function refreshJoinPage() {
-    if (!supabase) return;
+    generateQRJoin();
+    if (!dbReady || !supabase) {
+        document.getElementById('db-error').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('db-error').classList.add('hidden');
+
     try {
-        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
         if (error) throw error;
         const mode = data ? data.mode : 'group';
         const isGroup = mode === 'group';
@@ -1110,8 +1104,9 @@ async function refreshJoinPage() {
             updateLotteryCount();
             loadMyLotteryRecords();
         }
-        generateQRJoin();
-    } catch (e) { console.error('刷新页面失败:', e); }
+    } catch (e) {
+        console.error('刷新页面失败:', e);
+    }
 }
 
 // ==================== 初始化 ====================
@@ -1120,10 +1115,17 @@ document.getElementById('group-size').addEventListener('input', function() {
     const count = parseInt(document.getElementById('admin-count').textContent) || 0;
     document.getElementById('group-num').textContent = count > 0 ? Math.ceil(count / size) : 0;
 });
-document.getElementById('participant-name').addEventListener('keypress', function(e) { if (e.key === 'Enter') submitJoin(); });
-document.getElementById('admin-password').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPassword(); });
 
-refreshJoinPage();
+// 键盘事件委托
+document.addEventListener('keypress', function(e) {
+    if (e.target.id === 'participant-name' && e.key === 'Enter') submitJoin();
+    if (e.target.id === 'admin-password' && e.key === 'Enter') checkPassword();
+});
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    refreshJoinPage();
+});
 
 setInterval(() => {
     if (isEditing) return;
