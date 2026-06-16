@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分组工具 - 云端版</title>
+    <title>智能分组与抽奖工具</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -15,53 +15,64 @@
         .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; }
         .input-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 15px; color: #444; }
-        input[type="text"], input[type="number"], input[type="password"] { width: 100%; padding: 14px 16px; border: 2px solid #e8e8e8; border-radius: 12px; font-size: 16px; transition: all 0.3s; -webkit-appearance: none; }
+        input[type="text"], input[type="number"], input[type="password"], input[type="tel"] {
+            width: 100%; padding: 14px 16px; border: 2px solid #e8e8e8; border-radius: 12px; font-size: 16px;
+            transition: all 0.3s; -webkit-appearance: none;
+        }
         input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.3s; -webkit-appearance: none; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; -webkit-appearance: none; }
         .btn-primary { background: #4f46e5; color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-        .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2); }
+        .btn-primary:active { transform: scale(0.98); }
         .btn-secondary { background: #fff; color: #4f46e5; border: 2px solid #4f46e5; margin-top: 12px; }
-        .btn-danger { background: #ef4444; color: #fff; margin-top: 12px; }
+        .btn-danger { background: #ef4444; color: #fff; }
         .btn-success { background: #10b981; color: #fff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-warning { background: #f59e0b; color: #fff; }
         .btn-small { padding: 8px 14px; font-size: 14px; width: auto; display: inline-block; margin-top: 0; }
-        .success-msg { background: #d1fae5; color: #065f46; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-weight: 500; display: none; animation: slideIn 0.3s ease; }
-        .error-msg { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 16px; font-size: 14px; display: none; }
+        .success-msg { background: #d1fae5; color: #065f46; padding: 16px; border-radius: 12px; text-align: center;
+            margin-bottom: 20px; font-weight: 500; display: none; animation: slideIn 0.3s ease; }
+        .info-msg { background: #dbeafe; color: #1e40af; padding: 16px; border-radius: 12px; text-align: center;
+            margin-bottom: 20px; font-weight: 500; display: none; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
         .stat-item { text-align: center; }
         .stat-num { font-size: 32px; font-weight: 700; color: #4f46e5; }
         .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
-        .participant-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
-        .person-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; animation: slideIn 0.3s ease; }
+        .participant-list, .lottery-list, .prize-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
+        .person-item, .lottery-item, .prize-item { display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; animation: slideIn 0.3s ease; }
         .person-name { font-weight: 500; font-size: 16px; }
         .person-time { font-size: 12px; color: #999; }
         .delete-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
         .edit-btn { background: #dbeafe; color: #2563eb; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
         .save-btn { background: #d1fae5; color: #065f46; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
+        .cancel-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
         .empty-state { text-align: center; padding: 40px 20px; color: #999; }
-        .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
         .group-config { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
         .group-config .input-group { flex: 1; margin-bottom: 0; }
         .group-result { margin-top: 20px; }
-        .group-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
-        .group-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); pointer-events: none; }
+        .group-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px;
+            padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
+        .group-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); pointer-events: none; }
         .group-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .group-members { display: flex; flex-wrap: wrap; gap: 8px; }
-        .member-tag { background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 14px; backdrop-filter: blur(10px); }
+        .member-tag { background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 14px; }
         .qr-section { text-align: center; padding: 20px; }
-        #qrcode { display: inline-block; padding: 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 12px; }
+        #qrcode { display: inline-block; padding: 16px; background: #fff; border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 12px; }
         .qr-tip { font-size: 14px; color: #666; }
         .nav-tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .nav-tab { flex: 1; text-align: center; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s; border: none; background: transparent; color: #666; }
+        .nav-tab { flex: 1; text-align: center; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 500;
+            cursor: pointer; transition: all 0.3s; border: none; background: transparent; color: #666; }
         .nav-tab.active { background: #4f46e5; color: #fff; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); }
         .section { display: none; }
         .section.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .password-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .password-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
         .password-mask.show { display: flex; }
         .password-card { background: #fff; padding: 32px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; }
-        .password-card h2 { margin-bottom: 8px; }
-        .password-card p { color: #666; font-size: 14px; margin-bottom: 20px; }
         .hidden { display: none !important; }
         .group-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .group-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
@@ -74,57 +85,92 @@
         .copy-hint { font-size: 12px; color: #999; text-align: center; margin-top: 8px; }
         .admin-hint { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; }
         .admin-link { color: #999; font-size: 13px; text-decoration: none; cursor: pointer; background: none; border: none; padding: 8px 16px; }
-        .admin-link:hover { color: #4f46e5; }
-        .sync-status { text-align: center; font-size: 12px; color: #999; margin-top: 8px; }
+        .sync-status { font-size: 12px; color: #999; margin-left: 8px; }
         .sync-status.online { color: #10b981; }
         .sync-status.offline { color: #ef4444; }
         .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
         .toggle-row:last-child { border-bottom: none; }
         .toggle-label { font-size: 15px; color: #333; }
         .toggle-desc { font-size: 12px; color: #999; margin-top: 2px; }
-        .toggle-switch { position: relative; width: 48px; height: 26px; background: #e5e7eb; border-radius: 13px; cursor: pointer; transition: all 0.3s; -webkit-appearance: none; appearance: none; border: none; }
+        .toggle-switch { position: relative; width: 48px; height: 26px; background: #e5e7eb; border-radius: 13px;
+            cursor: pointer; transition: all 0.3s; -webkit-appearance: none; appearance: none; border: none; }
         .toggle-switch:checked { background: #4f46e5; }
-        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px;
+            background: #fff; border-radius: 50%; transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .toggle-switch:checked::after { left: 24px; }
         .my-records { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-        .my-records h4 { font-size: 16px; margin-bottom: 12px; color: #333; }
-        .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
+        .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px;
+            background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
         .record-name { font-weight: 500; }
         .record-time { font-size: 11px; color: #999; }
         .record-actions { display: flex; gap: 6px; }
+        .mode-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+        .mode-badge.group { background: #dbeafe; color: #2563eb; }
+        .mode-badge.lottery { background: #fce7f3; color: #db2777; }
+        .prize-won { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .prize-lost { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .prize-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .lottery-result { text-align: center; padding: 40px 20px; }
+        .lottery-result .emoji { font-size: 64px; margin-bottom: 16px; }
+        .lottery-result .text { font-size: 24px; font-weight: 700; color: #4f46e5; }
+        .lottery-result .sub { font-size: 14px; color: #666; margin-top: 8px; }
+        .form-field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .form-field-row input { flex: 1; }
+        .form-field-row .toggle-switch { width: 40px; height: 22px; flex-shrink: 0; }
+        .form-field-row .toggle-switch::after { width: 18px; height: 18px; }
+        .form-field-row .toggle-switch:checked::after { left: 20px; }
+        .draw-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; font-size: 20px;
+            padding: 20px; border-radius: 16px; margin: 20px 0; }
+        .draw-btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
+<base target="_blank">
 </head>
 <body>
 
 <div class="container">
     <div class="nav-tabs" id="nav-tabs">
-        <button class="nav-tab active" data-tab="join" onclick="switchTab('join')">📱 扫码报名</button>
-        <button class="nav-tab" data-tab="admin" onclick="switchTab('admin')">🔐 管理分组</button>
+        <button class="nav-tab active" data-tab="join" onclick="switchTab('join')">📱 扫码参与</button>
+        <button class="nav-tab" data-tab="admin" onclick="switchTab('admin')">🔐 管理后台</button>
     </div>
 
     <!-- 参与者页面 -->
     <div id="join-section" class="section active">
         <div class="card">
-            <h1>📝 活动报名</h1>
-            <p class="subtitle">填写姓名完成报名，等待管理员分组</p>
-            
-            <div class="success-msg" id="join-success">✅ 报名成功！请等待管理员分组</div>
-            
-            <div class="input-group">
-                <label>您的姓名</label>
-                <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
+            <h1 id="join-title">📝 活动报名</h1>
+            <p class="subtitle" id="join-subtitle">填写信息完成报名，等待管理员分组</p>
+
+            <div class="success-msg" id="join-success">✅ 报名成功！</div>
+            <div class="info-msg" id="lottery-pending-msg">⏳ 参与成功，请等待开奖！</div>
+
+            <div id="join-form-area">
+                <!-- 动态表单字段插入这里 -->
+                <div class="input-group">
+                    <label>姓名 <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
+                </div>
             </div>
-            
-            <button class="btn btn-primary" onclick="submitJoin()">立即报名</button>
-            
+
+            <button class="btn btn-primary" onclick="submitJoin()" id="join-btn">立即报名</button>
+
+            <div class="lottery-result hidden" id="lottery-result-area">
+                <div class="emoji" id="result-emoji">🎉</div>
+                <div class="text" id="result-text">恭喜中奖！</div>
+                <div class="sub" id="result-sub">您获得了：iPhone 15</div>
+            </div>
+
             <div style="margin-top: 24px; text-align: center;">
-                <div style="font-size: 13px; color: #999; margin-bottom: 8px;">已报名人数</div>
+                <div style="font-size: 13px; color: #999; margin-bottom: 8px;">已参与人数</div>
                 <div style="font-size: 36px; font-weight: 700; color: #4f46e5;" id="join-count">0</div>
             </div>
 
-            <!-- 我的记录 -->
+            <!-- 二维码放在报名主页 -->
+            <div class="qr-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee;">
+                <div id="qrcode-join"></div>
+                <div class="qr-tip" id="qr-tip">📲 扫描上方二维码参与</div>
+            </div>
+
             <div class="my-records" id="my-records-area">
-                <h4>📋 我的报名记录</h4>
+                <h4>📋 我的记录</h4>
                 <div id="my-records-list">
                     <div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>
                 </div>
@@ -136,62 +182,54 @@
         </div>
     </div>
 
-    <!-- 管理页面 -->
+    <!-- 管理后台 -->
     <div id="admin-section" class="section">
         <div class="card">
             <h1>⚙️ 管理控制台</h1>
-            <p class="subtitle">查看报名人员并随机分组</p>
-            
+            <p class="subtitle">选择活动模式并管理数据</p>
+
             <div class="stats">
-                <div class="stat-item"><div class="stat-num" id="admin-count">0</div><div class="stat-label">报名人数</div></div>
-                <div class="stat-item"><div class="stat-num" id="group-num">0</div><div class="stat-label">分组数</div></div>
+                <div class="stat-item"><div class="stat-num" id="admin-count">0</div><div class="stat-label" id="admin-count-label">报名人数</div></div>
+                <div class="stat-item"><div class="stat-num" id="group-num">0</div><div class="stat-label" id="admin-label2">分组数</div></div>
             </div>
 
             <div class="qr-section">
-                <div id="qrcode"></div>
-                <div class="qr-tip">📲 让参与者扫描上方二维码报名</div>
-                <div class="copy-hint">或复制当前页面链接分享给参与者</div>
+                <div id="qrcode-admin"></div>
+                <div class="qr-tip" id="admin-qr-tip">📲 让参与者扫描上方二维码</div>
             </div>
         </div>
 
-        <!-- 全局设置 -->
+        <!-- 模式切换 -->
         <div class="card">
-            <h3 style="margin-bottom: 16px;">⚙️ 全局设置</h3>
+            <h3 style="margin-bottom: 16px;">🎯 活动模式</h3>
             <div class="toggle-row">
                 <div>
-                    <div class="toggle-label">允许重复提交</div>
-                    <div class="toggle-desc">同一用户可多次报名</div>
+                    <div class="toggle-label">当前模式</div>
+                    <div class="toggle-desc">切换分组或抽奖</div>
                 </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span class="mode-badge group" id="mode-badge-group">分组</span>
+                    <span class="mode-badge lottery hidden" id="mode-badge-lottery">抽奖</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:16px;">
+                <button class="btn btn-primary" onclick="setMode('group')" style="flex:1; font-size:14px; padding:12px;">📊 分组模式</button>
+                <button class="btn btn-warning" onclick="setMode('lottery')" style="flex:1; font-size:14px; padding:12px;">🎲 抽奖模式</button>
+            </div>
+        </div>
+
+        <!-- 分组设置（仅分组模式显示） -->
+        <div id="group-settings" class="card">
+            <h3 style="margin-bottom: 16px;">⚙️ 分组设置</h3>
+            <div class="toggle-row">
+                <div><div class="toggle-label">允许重复提交</div><div class="toggle-desc">同一用户可多次报名</div></div>
                 <input type="checkbox" class="toggle-switch" id="setting-duplicate" onchange="saveSettings()">
             </div>
             <div class="toggle-row">
-                <div>
-                    <div class="toggle-label">允许用户修改</div>
-                    <div class="toggle-desc">用户可修改自己提交的姓名</div>
-                </div>
+                <div><div class="toggle-label">允许用户修改</div><div class="toggle-desc">用户可修改自己提交的姓名</div></div>
                 <input type="checkbox" class="toggle-switch" id="setting-edit" onchange="saveSettings()">
             </div>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 16px;">👥 报名名单 <span id="sync-indicator" class="sync-status">同步中...</span></h3>
-            <div class="participant-list" id="participant-list">
-                <div class="empty-state">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <div>暂无报名人员</div>
-                </div>
-            </div>
-            <button class="btn btn-danger" onclick="clearAll()" style="font-size: 14px; padding: 12px;">🗑️ 清空所有数据</button>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 16px;">🎲 随机分组</h3>
-            <div class="group-config">
+            <div class="group-config" style="margin-top:16px;">
                 <div class="input-group">
                     <label>每组人数</label>
                     <input type="number" id="group-size" value="4" min="2" max="50">
@@ -199,6 +237,64 @@
                 <button class="btn btn-success" onclick="generateGroups()" style="width: auto; padding: 14px 24px;">开始分组</button>
             </div>
             <div class="group-result" id="group-result"></div>
+        </div>
+
+        <!-- 抽奖设置（仅抽奖模式显示） -->
+        <div id="lottery-settings" class="card hidden">
+            <h3 style="margin-bottom: 16px;">🎰 抽奖设置</h3>
+
+            <div class="toggle-row">
+                <div><div class="toggle-label">抽奖方式</div><div class="toggle-desc">实时开奖或手动开奖</div></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-small btn-primary" id="btn-realtime" onclick="setLotteryType('realtime')">实时</button>
+                    <button class="btn btn-small btn-secondary" id="btn-manual" onclick="setLotteryType('manual')">手动</button>
+                </div>
+            </div>
+
+            <h4 style="margin: 20px 0 12px; font-size: 16px;">🎁 奖品设置</h4>
+            <div class="prize-list" id="prize-list">
+                <div style="text-align:center; color:#999; padding:12px;">暂无奖品</div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <input type="text" id="prize-name" placeholder="奖品名称" style="flex:2;">
+                <input type="number" id="prize-qty" placeholder="数量" value="1" min="1" style="flex:1;">
+                <button class="btn btn-small btn-success" onclick="addPrize()" style="width:auto;">添加</button>
+            </div>
+
+            <h4 style="margin: 20px 0 12px; font-size: 16px;">📝 表单字段设置</h4>
+            <div class="prize-list" id="form-fields-list">
+                <div style="text-align:center; color:#999; padding:12px;">暂无自定义字段</div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+                <input type="text" id="field-label" placeholder="字段名称（如：手机号）" style="flex:2;">
+                <input type="text" id="field-key" placeholder="字段标识（如：phone）" style="flex:1;">
+                <label style="display:flex; align-items:center; gap:4px; font-size:13px; white-space:nowrap;">
+                    <input type="checkbox" id="field-required" style="width:auto;"> 必填
+                </label>
+                <button class="btn btn-small btn-success" onclick="addFormField()" style="width:auto;">添加</button>
+            </div>
+
+            <button class="btn btn-primary draw-btn" id="manual-draw-btn" onclick="manualDraw()" style="display:none;">
+                🎲 点击开奖
+            </button>
+        </div>
+
+        <!-- 名单（分组模式） -->
+        <div id="group-participants-card" class="card">
+            <h3 style="margin-bottom: 16px;">👥 报名名单 <span id="sync-indicator" class="sync-status">同步中...</span></h3>
+            <div class="participant-list" id="participant-list">
+                <div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无报名人员</div></div>
+            </div>
+            <button class="btn btn-danger" onclick="clearAll()" style="font-size: 14px; padding: 12px;">🗑️ 清空所有数据</button>
+        </div>
+
+        <!-- 抽奖名单（抽奖模式） -->
+        <div id="lottery-participants-card" class="card hidden">
+            <h3 style="margin-bottom: 16px;">🎰 抽奖名单 <span id="lottery-sync-indicator" class="sync-status">同步中...</span></h3>
+            <div class="lottery-list" id="lottery-list">
+                <div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无参与者</div></div>
+            </div>
+            <button class="btn btn-danger" onclick="clearLottery()" style="font-size: 14px; padding: 12px;">🗑️ 清空抽奖数据</button>
         </div>
     </div>
 </div>
@@ -211,7 +307,7 @@
             <input type="password" id="admin-password" placeholder="请输入管理密码" maxlength="10">
         </div>
         <button class="btn btn-primary" onclick="checkPassword()">进入管理</button>
-        <div style="margin-top: 12px; font-size: 13px; color: #999; cursor: pointer;" onclick="backToJoin()">← 返回报名页面</div>
+        <div style="margin-top: 12px; font-size: 13px; color: #999; cursor: pointer;" onclick="backToJoin()">← 返回参与页面</div>
     </div>
 </div>
 
@@ -228,22 +324,21 @@ try {
 }
 
 const ADMIN_PASSWORD = '1234';
-
-// 用户设备标识（用于区分不同用户）
 let deviceId = localStorage.getItem('grouping_device_id');
 if (!deviceId) {
     deviceId = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('grouping_device_id', deviceId);
 }
 
-// 全局设置缓存
-let globalSettings = { allow_duplicate: false, allow_edit: false };
+let globalSettings = { allow_duplicate: false, allow_edit: false, mode: 'group', lottery_type: 'realtime' };
+let isEditing = false;
+let currentFormFields = [];
+let currentPrizes = [];
 
 // ==================== 页面切换 ====================
 function switchTab(tab) {
     if (tab === 'admin') {
-        const mask = document.getElementById('password-mask');
-        mask.classList.add('show');
+        document.getElementById('password-mask').classList.add('show');
         document.getElementById('admin-password').value = '';
         setTimeout(() => document.getElementById('admin-password').focus(), 100);
         return;
@@ -255,8 +350,7 @@ function switchTab(tab) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
     if (tab === 'join') {
-        updateJoinCount();
-        loadMyRecords();
+        refreshJoinPage();
     }
 }
 
@@ -268,8 +362,7 @@ function backToJoin() {
     });
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('join-section').classList.add('active');
-    updateJoinCount();
-    loadMyRecords();
+    refreshJoinPage();
 }
 
 function checkPassword() {
@@ -282,24 +375,85 @@ function checkPassword() {
         });
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById('admin-section').classList.add('active');
-        loadSettings();
-        loadParticipants();
-        generateQR();
+        loadAdminData();
     } else {
         alert('密码错误！');
     }
 }
 
-// ==================== 设置管理 ====================
+// ==================== 模式管理 ====================
+async function setMode(mode) {
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('settings').upsert({ id: 1, mode: mode });
+        if (error) throw error;
+        globalSettings.mode = mode;
+        updateModeUI();
+        refreshJoinPage();
+        loadAdminData();
+    } catch (e) {
+        alert('切换模式失败: ' + e.message);
+    }
+}
+
+async function setLotteryType(type) {
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('settings').upsert({ id: 1, lottery_type: type });
+        if (error) throw error;
+        globalSettings.lottery_type = type;
+        updateLotteryTypeUI();
+        refreshJoinPage();
+    } catch (e) {
+        alert('设置失败: ' + e.message);
+    }
+}
+
+function updateModeUI() {
+    const isGroup = globalSettings.mode === 'group';
+    document.getElementById('mode-badge-group').classList.toggle('hidden', !isGroup);
+    document.getElementById('mode-badge-lottery').classList.toggle('hidden', isGroup);
+    document.getElementById('group-settings').classList.toggle('hidden', !isGroup);
+    document.getElementById('lottery-settings').classList.toggle('hidden', isGroup);
+    document.getElementById('group-participants-card').classList.toggle('hidden', !isGroup);
+    document.getElementById('lottery-participants-card').classList.toggle('hidden', isGroup);
+    document.getElementById('admin-count-label').textContent = isGroup ? '报名人数' : '参与人数';
+    document.getElementById('admin-label2').textContent = isGroup ? '分组数' : '奖品数';
+    document.getElementById('admin-qr-tip').textContent = isGroup ? '📲 让参与者扫描上方二维码报名' : '📲 让参与者扫描上方二维码抽奖';
+}
+
+function updateLotteryTypeUI() {
+    const isRealtime = globalSettings.lottery_type === 'realtime';
+    document.getElementById('btn-realtime').className = isRealtime ? 'btn btn-small btn-primary' : 'btn btn-small btn-secondary';
+    document.getElementById('btn-manual').className = isRealtime ? 'btn btn-small btn-secondary' : 'btn btn-small btn-primary';
+    document.getElementById('manual-draw-btn').style.display = isRealtime ? 'none' : 'block';
+}
+
+// ==================== 加载管理数据 ====================
+async function loadAdminData() {
+    await loadSettings();
+    updateModeUI();
+    updateLotteryTypeUI();
+    if (globalSettings.mode === 'group') {
+        loadParticipants();
+        loadGroupSettings();
+    } else {
+        loadPrizes();
+        loadFormFields();
+        loadLotteryParticipants();
+    }
+    generateQRAdmin();
+}
+
 async function loadSettings() {
     if (!supabase) return;
     try {
         const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
         if (error) throw error;
         if (data) {
-            globalSettings = data;
-            document.getElementById('setting-duplicate').checked = data.allow_duplicate;
-            document.getElementById('setting-edit').checked = data.allow_edit;
+            globalSettings = { ...globalSettings, ...data };
+            document.getElementById('setting-duplicate').checked = data.allow_duplicate || false;
+            document.getElementById('setting-edit').checked = data.allow_edit || false;
         }
     } catch (e) {
         console.error('加载设置失败:', e);
@@ -311,15 +465,26 @@ async function saveSettings() {
     const allowDuplicate = document.getElementById('setting-duplicate').checked;
     const allowEdit = document.getElementById('setting-edit').checked;
     try {
-        const { error } = await supabase.from('settings').upsert({ id: 1, allow_duplicate: allowDuplicate, allow_edit: allowEdit });
+        const { error } = await supabase.from('settings').upsert({
+            id: 1,
+            allow_duplicate: allowDuplicate,
+            allow_edit: allowEdit,
+            mode: globalSettings.mode,
+            lottery_type: globalSettings.lottery_type
+        });
         if (error) throw error;
-        globalSettings = { allow_duplicate: allowDuplicate, allow_edit: allowEdit };
+        globalSettings.allow_duplicate = allowDuplicate;
+        globalSettings.allow_edit = allowEdit;
     } catch (e) {
         alert('保存设置失败: ' + e.message);
     }
 }
 
-// ==================== 云端数据操作 ====================
+function loadGroupSettings() {
+    // 分组模式下的设置已在 loadSettings 中加载
+}
+
+// ==================== 分组功能（原有） ====================
 async function loadParticipants() {
     if (!supabase) { showSyncStatus('数据库未配置', false); return; }
     showSyncStatus('同步中...', true);
@@ -335,28 +500,24 @@ async function loadParticipants() {
 }
 
 async function submitJoin() {
+    if (globalSettings.mode === 'lottery') {
+        submitLottery();
+        return;
+    }
     const nameInput = document.getElementById('participant-name');
     const name = nameInput.value.trim();
     if (!name) { alert('请输入姓名'); return; }
     if (!supabase) { alert('数据库未配置'); return; }
 
     try {
-        // 先刷新设置
         const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
-        const settings = settingsData || { allow_duplicate: false, allow_edit: false };
-
-        // 如果不允许重复，检查该设备是否已提交
+        const settings = settingsData || { allow_duplicate: false };
         if (!settings.allow_duplicate) {
             const { data: existing } = await supabase.from('participants').select('id').eq('user_id', deviceId);
-            if (existing && existing.length > 0) {
-                alert('您已报名，请勿重复提交');
-                return;
-            }
+            if (existing && existing.length > 0) { alert('您已报名，请勿重复提交'); return; }
         }
-
         const { error } = await supabase.from('participants').insert([{ name: name, user_id: deviceId }]);
         if (error) throw error;
-
         nameInput.value = '';
         document.getElementById('join-success').style.display = 'block';
         updateJoinCount();
@@ -367,69 +528,6 @@ async function submitJoin() {
     }
 }
 
-async function loadMyRecords() {
-    if (!supabase) return;
-    try {
-        const { data, error } = await supabase.from('participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
-        if (error) throw error;
-
-        const container = document.getElementById('my-records-list');
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
-            return;
-        }
-
-        // 刷新设置以确定是否显示编辑按钮
-        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
-        const allowEdit = settingsData ? settingsData.allow_edit : false;
-
-        container.innerHTML = data.map(p => `
-            <div class="record-item" id="record-${p.id}">
-                <div>
-                    <div class="record-name" id="name-display-${p.id}">${p.name}</div>
-                    <div class="record-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
-                </div>
-                <div class="record-actions">
-                    ${allowEdit ? `<button class="edit-btn" onclick="startEdit(${p.id}, '${p.name}')">✏️ 修改</button>` : ''}
-                </div>
-            </div>
-        `).join('');
-    } catch (e) {
-        console.error('加载我的记录失败:', e);
-    }
-}
-
-function startEdit(id, oldName) {
-    const displayEl = document.getElementById(`name-display-${id}`);
-    const parent = displayEl.parentElement.parentElement;
-    const actions = parent.querySelector('.record-actions');
-
-    displayEl.style.display = 'none';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = oldName;
-    input.style = 'padding:6px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:14px; width:120px;';
-    input.id = `edit-input-${id}`;
-    displayEl.parentElement.insertBefore(input, displayEl);
-
-    actions.innerHTML = `<button class="save-btn" onclick="saveEdit(${id})">💾 保存</button>`;
-}
-
-async function saveEdit(id) {
-    const input = document.getElementById(`edit-input-${id}`);
-    const newName = input.value.trim();
-    if (!newName) { alert('姓名不能为空'); return; }
-
-    try {
-        const { error } = await supabase.from('participants').update({ name: newName }).eq('id', id);
-        if (error) throw error;
-        loadMyRecords();
-        updateJoinCount();
-    } catch (e) {
-        alert('修改失败: ' + e.message);
-    }
-}
-
 async function deletePerson(id) {
     if (!confirm('确定删除该人员？')) return;
     if (!supabase) return;
@@ -437,9 +535,7 @@ async function deletePerson(id) {
         const { error } = await supabase.from('participants').delete().eq('id', id);
         if (error) throw error;
         loadParticipants();
-    } catch (e) {
-        alert('删除失败: ' + e.message);
-    }
+    } catch (e) { alert('删除失败: ' + e.message); }
 }
 
 async function clearAll() {
@@ -451,12 +547,9 @@ async function clearAll() {
         loadParticipants();
         updateJoinCount();
         loadMyRecords();
-    } catch (e) {
-        alert('清空失败: ' + e.message);
-    }
+    } catch (e) { alert('清空失败: ' + e.message); }
 }
 
-// ==================== 界面渲染 ====================
 function renderParticipantList(data) {
     const listEl = document.getElementById('participant-list');
     if (!data || data.length === 0) {
@@ -486,7 +579,6 @@ function showSyncStatus(text, isOnline) {
     el.className = 'sync-status ' + (isOnline ? 'online' : 'offline');
 }
 
-// ==================== 随机分组 ====================
 async function generateGroups() {
     if (!supabase) { alert('数据库未配置'); return; }
     const size = parseInt(document.getElementById('group-size').value);
@@ -518,11 +610,14 @@ function updateGroupNum(num) { document.getElementById('group-num').textContent 
 function copyResult() {
     const cards = document.querySelectorAll('.group-card');
     if (cards.length === 0) return;
-    let text = '🎲 随机分组结果：\n\n';
+    let text = '🎲 随机分组结果：
+
+';
     cards.forEach((card, idx) => {
         const title = card.querySelector('.group-title').textContent.trim();
         const members = Array.from(card.querySelectorAll('.member-tag')).map(t => t.textContent).join('、');
-        text += `${title}：${members}\n`;
+        text += `${title}：${members}
+`;
     });
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => alert('已复制'));
@@ -537,11 +632,486 @@ function copyResult() {
     }
 }
 
-function generateQR() {
-    const qrcodeContainer = document.getElementById('qrcode');
-    qrcodeContainer.innerHTML = '';
+// ==================== 抽奖功能 ====================
+async function loadPrizes() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('prizes').select('*').order('created_at', { ascending: true });
+        if (error) throw error;
+        currentPrizes = data || [];
+        renderPrizes();
+        document.getElementById('group-num').textContent = currentPrizes.length;
+    } catch (e) { console.error('加载奖品失败:', e); }
+}
+
+function renderPrizes() {
+    const container = document.getElementById('prize-list');
+    if (!currentPrizes || currentPrizes.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#999; padding:12px;">暂无奖品</div>';
+        return;
+    }
+    container.innerHTML = currentPrizes.map(p => `
+        <div class="prize-item">
+            <div>
+                <div class="person-name">${p.name}</div>
+                <div class="person-time">剩余 ${p.remaining} / ${p.quantity} 个</div>
+            </div>
+            <button class="delete-btn" onclick="deletePrize(${p.id})">删除</button>
+        </div>
+    `).join('');
+}
+
+async function addPrize() {
+    const name = document.getElementById('prize-name').value.trim();
+    const qty = parseInt(document.getElementById('prize-qty').value) || 1;
+    if (!name) { alert('请输入奖品名称'); return; }
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('prizes').insert([{ name: name, quantity: qty, remaining: qty }]);
+        if (error) throw error;
+        document.getElementById('prize-name').value = '';
+        document.getElementById('prize-qty').value = '1';
+        loadPrizes();
+    } catch (e) { alert('添加失败: ' + e.message); }
+}
+
+async function deletePrize(id) {
+    if (!confirm('确定删除该奖品？')) return;
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('prizes').delete().eq('id', id);
+        if (error) throw error;
+        loadPrizes();
+    } catch (e) { alert('删除失败: ' + e.message); }
+}
+
+// 表单字段
+async function loadFormFields() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('form_fields').select('*').order('sort_order', { ascending: true });
+        if (error) throw error;
+        currentFormFields = data || [];
+        renderFormFields();
+        buildJoinForm();
+    } catch (e) { console.error('加载字段失败:', e); }
+}
+
+function renderFormFields() {
+    const container = document.getElementById('form-fields-list');
+    if (!currentFormFields || currentFormFields.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#999; padding:12px;">暂无自定义字段</div>';
+        return;
+    }
+    container.innerHTML = currentFormFields.map(f => `
+        <div class="prize-item">
+            <div>
+                <div class="person-name">${f.label} <span style="color:#999; font-size:12px;">(${f.field_key})</span></div>
+                <div class="person-time">${f.required ? '必填' : '选填'}</div>
+            </div>
+            <button class="delete-btn" onclick="deleteFormField(${f.id})">删除</button>
+        </div>
+    `).join('');
+}
+
+async function addFormField() {
+    const label = document.getElementById('field-label').value.trim();
+    const key = document.getElementById('field-key').value.trim();
+    const required = document.getElementById('field-required').checked;
+    if (!label || !key) { alert('请填写字段名称和标识'); return; }
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('form_fields').insert([{ label: label, field_key: key, required: required, sort_order: currentFormFields.length }]);
+        if (error) throw error;
+        document.getElementById('field-label').value = '';
+        document.getElementById('field-key').value = '';
+        document.getElementById('field-required').checked = false;
+        loadFormFields();
+    } catch (e) { alert('添加失败: ' + e.message); }
+}
+
+async function deleteFormField(id) {
+    if (!confirm('确定删除该字段？')) return;
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('form_fields').delete().eq('id', id);
+        if (error) throw error;
+        loadFormFields();
+    } catch (e) { alert('删除失败: ' + e.message); }
+}
+
+function buildJoinForm() {
+    const area = document.getElementById('join-form-area');
+    let html = `
+        <div class="input-group">
+            <label>姓名 <span style="color:#ef4444">*</span></label>
+            <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
+        </div>
+    `;
+    currentFormFields.forEach(f => {
+        html += `
+            <div class="input-group">
+                <label>${f.label} ${f.required ? '<span style="color:#ef4444">*</span>' : ''}</label>
+                <input type="text" id="field-${f.field_key}" placeholder="请输入${f.label}" data-key="${f.field_key}" data-required="${f.required}">
+            </div>
+        `;
+    });
+    area.innerHTML = html;
+}
+
+async function submitLottery() {
+    const name = document.getElementById('participant-name').value.trim();
+    if (!name) { alert('请输入姓名'); return; }
+    if (!supabase) { alert('数据库未配置'); return; }
+
+    // 收集自定义字段
+    const customData = {};
+    for (const f of currentFormFields) {
+        const el = document.getElementById(`field-${f.field_key}`);
+        const val = el ? el.value.trim() : '';
+        if (f.required && !val) { alert(`请填写${f.label}`); return; }
+        if (val) customData[f.field_key] = val;
+    }
+
+    try {
+        // 检查是否已参与
+        const { data: existing } = await supabase.from('lottery_participants').select('id').eq('user_id', deviceId);
+        if (existing && existing.length > 0) { alert('您已参与，请勿重复提交'); return; }
+
+        const isRealtime = globalSettings.lottery_type === 'realtime';
+
+        if (isRealtime) {
+            // 实时开奖
+            const { data: prizes } = await supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true });
+            let prizeName = '未中奖';
+            let status = 'lost';
+            let wonPrize = null;
+
+            if (prizes && prizes.length > 0) {
+                // 随机抽取一个奖品
+                const randomIdx = Math.floor(Math.random() * prizes.length);
+                wonPrize = prizes[randomIdx];
+                prizeName = wonPrize.name;
+                status = 'won';
+                // 减少库存
+                await supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 }).eq('id', wonPrize.id);
+            }
+
+            const { error } = await supabase.from('lottery_participants').insert([{
+                name: name,
+                user_id: deviceId,
+                custom_data: customData,
+                prize_name: prizeName,
+                status: status
+            }]);
+            if (error) throw error;
+
+            showLotteryResult(prizeName, status);
+        } else {
+            // 手动开奖：先记录，状态 pending
+            const { error } = await supabase.from('lottery_participants').insert([{
+                name: name,
+                user_id: deviceId,
+                custom_data: customData,
+                prize_name: null,
+                status: 'pending'
+            }]);
+            if (error) throw error;
+
+            document.getElementById('lottery-pending-msg').style.display = 'block';
+            setTimeout(() => { document.getElementById('lottery-pending-msg').style.display = 'none'; }, 3000);
+        }
+
+        document.getElementById('participant-name').value = '';
+        currentFormFields.forEach(f => {
+            const el = document.getElementById(`field-${f.field_key}`);
+            if (el) el.value = '';
+        });
+        updateLotteryCount();
+        loadMyLotteryRecords();
+    } catch (e) {
+        alert('参与失败: ' + e.message);
+    }
+}
+
+function showLotteryResult(prizeName, status) {
+    const area = document.getElementById('lottery-result-area');
+    const emoji = document.getElementById('result-emoji');
+    const text = document.getElementById('result-text');
+    const sub = document.getElementById('result-sub');
+
+    area.classList.remove('hidden');
+    if (status === 'won' && prizeName !== '未中奖') {
+        emoji.textContent = '🎉';
+        text.textContent = '恭喜中奖！';
+        text.style.color = '#4f46e5';
+        sub.textContent = '您获得了：' + prizeName;
+    } else {
+        emoji.textContent = '😊';
+        text.textContent = '谢谢参与';
+        text.style.color = '#666';
+        sub.textContent = '很遗憾，您未中奖';
+    }
+
+    setTimeout(() => { area.classList.add('hidden'); }, 5000);
+}
+
+async function manualDraw() {
+    if (!supabase) return;
+    if (!confirm('确定现在开奖？开奖后所有待开奖参与者将随机分配奖品。')) return;
+
+    try {
+        // 获取所有 pending 的参与者
+        const { data: participants, error: pError } = await supabase.from('lottery_participants').select('*').eq('status', 'pending');
+        if (pError) throw pError;
+        if (!participants || participants.length === 0) { alert('暂无待开奖参与者'); return; }
+
+        // 获取所有奖品（按剩余数量展开为数组）
+        const { data: prizes, error: prError } = await supabase.from('prizes').select('*');
+        if (prError) throw prError;
+
+        // 构建奖品池（每个奖品按剩余数量展开）
+        let prizePool = [];
+        (prizes || []).forEach(p => {
+            for (let i = 0; i < p.remaining; i++) prizePool.push(p);
+        });
+
+        // 随机打乱参与者
+        const shuffled = [...participants];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        // 分配奖品
+        for (let i = 0; i < shuffled.length; i++) {
+            const p = shuffled[i];
+            if (i < prizePool.length) {
+                const won = prizePool[i];
+                await supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id);
+                await supabase.from('prizes').update({ remaining: won.remaining - 1 }).eq('id', won.id);
+            } else {
+                await supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id);
+            }
+        }
+
+        alert('开奖完成！共 ' + participants.length + ' 人参与，' + Math.min(prizePool.length, participants.length) + ' 人中奖');
+        loadLotteryParticipants();
+        loadPrizes();
+    } catch (e) {
+        alert('开奖失败: ' + e.message);
+    }
+}
+
+async function loadLotteryParticipants() {
+    if (!supabase) { showLotterySyncStatus('数据库未配置', false); return; }
+    showLotterySyncStatus('同步中...', true);
+    try {
+        const { data, error } = await supabase.from('lottery_participants').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        renderLotteryList(data || []);
+        updateLotteryCount();
+        showLotterySyncStatus('已同步', true);
+    } catch (e) {
+        showLotterySyncStatus('同步失败: ' + e.message, false);
+    }
+}
+
+function renderLotteryList(data) {
+    const container = document.getElementById('lottery-list');
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无参与者</div></div>`;
+        return;
+    }
+    container.innerHTML = data.map(p => {
+        let statusBadge = '';
+        if (p.status === 'pending') statusBadge = '<span class="prize-pending">待开奖</span>';
+        else if (p.status === 'won') statusBadge = '<span class="prize-won">🎁 ' + (p.prize_name || '中奖') + '</span>';
+        else statusBadge = '<span class="prize-lost">未中奖</span>';
+
+        let customInfo = '';
+        if (p.custom_data) {
+            const entries = Object.entries(p.custom_data);
+            if (entries.length > 0) customInfo = '<div style="font-size:11px; color:#999; margin-top:2px;">' + entries.map(([k,v]) => `${k}: ${v}`).join(' | ') + '</div>';
+        }
+
+        return `<div class="lottery-item">
+            <div>
+                <div class="person-name">${p.name} ${statusBadge}</div>
+                <div class="person-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
+                ${customInfo}
+            </div>
+            <button class="delete-btn" onclick="deleteLotteryPerson(${p.id})">删除</button>
+        </div>`;
+    }).join('');
+}
+
+async function deleteLotteryPerson(id) {
+    if (!confirm('确定删除该参与者？')) return;
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('lottery_participants').delete().eq('id', id);
+        if (error) throw error;
+        loadLotteryParticipants();
+    } catch (e) { alert('删除失败: ' + e.message); }
+}
+
+async function clearLottery() {
+    if (!confirm('确定清空所有抽奖数据？此操作不可恢复！')) return;
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('lottery_participants').delete().neq('id', 0);
+        if (error) throw error;
+        loadLotteryParticipants();
+        updateLotteryCount();
+        loadMyLotteryRecords();
+    } catch (e) { alert('清空失败: ' + e.message); }
+}
+
+async function updateLotteryCount() {
+    if (!supabase) { document.getElementById('join-count').textContent = '0'; return; }
+    try {
+        const { data, error } = await supabase.from('lottery_participants').select('*');
+        if (error) throw error;
+        document.getElementById('join-count').textContent = data ? data.length : 0;
+        document.getElementById('admin-count').textContent = data ? data.length : 0;
+    } catch (e) { document.getElementById('join-count').textContent = '0'; }
+}
+
+function showLotterySyncStatus(text, isOnline) {
+    const el = document.getElementById('lottery-sync-indicator');
+    el.textContent = text;
+    el.className = 'sync-status ' + (isOnline ? 'online' : 'offline');
+}
+
+async function loadMyLotteryRecords() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('lottery_participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
+        if (error) throw error;
+        const container = document.getElementById('my-records-list');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
+            return;
+        }
+        container.innerHTML = data.map(p => {
+            let status = '';
+            if (p.status === 'pending') status = '<span style="color:#f59e0b;">待开奖</span>';
+            else if (p.status === 'won') status = '<span style="color:#10b981; font-weight:600;">🎁 ' + (p.prize_name || '中奖') + '</span>';
+            else status = '<span style="color:#999;">未中奖</span>';
+            return `<div class="record-item"><div><div class="record-name">${p.name} - ${status}</div><div class="record-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div></div></div>`;
+        }).join('');
+    } catch (e) { console.error('加载记录失败:', e); }
+}
+
+// ==================== 我的记录（分组模式） ====================
+async function loadMyRecords() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
+        if (error) throw error;
+        const container = document.getElementById('my-records-list');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
+            return;
+        }
+        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).single();
+        const allowEdit = settingsData ? settingsData.allow_edit : false;
+        container.innerHTML = data.map(p => `
+            <div class="record-item" id="record-${p.id}">
+                <div>
+                    <div class="record-name" id="name-display-${p.id}">${p.name}</div>
+                    <div class="record-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
+                </div>
+                <div class="record-actions">
+                    ${allowEdit ? `<button class="edit-btn" onclick="startEdit(${p.id}, '${p.name}')">✏️ 修改</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error('加载记录失败:', e); }
+}
+
+function startEdit(id, oldName) {
+    isEditing = true;
+    const displayEl = document.getElementById(`name-display-${id}`);
+    const parent = displayEl.parentElement.parentElement;
+    const actions = parent.querySelector('.record-actions');
+    displayEl.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldName;
+    input.style = 'padding:6px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:14px; width:120px;';
+    input.id = `edit-input-${id}`;
+    displayEl.parentElement.insertBefore(input, displayEl);
+    input.focus();
+    actions.innerHTML = `<button class="save-btn" onclick="saveEdit(${id})">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(${id}, '${oldName}')">❌ 取消</button>`;
+}
+
+function cancelEdit(id, oldName) {
+    isEditing = false;
+    const input = document.getElementById(`edit-input-${id}`);
+    const displayEl = document.getElementById(`name-display-${id}`);
+    if (input) input.remove();
+    displayEl.style.display = 'block';
+    const parent = displayEl.parentElement.parentElement;
+    const actions = parent.querySelector('.record-actions');
+    actions.innerHTML = `<button class="edit-btn" onclick="startEdit(${id}, '${oldName}')">✏️ 修改</button>`;
+}
+
+async function saveEdit(id) {
+    const input = document.getElementById(`edit-input-${id}`);
+    const newName = input.value.trim();
+    if (!newName) { alert('姓名不能为空'); return; }
+    try {
+        const { error } = await supabase.from('participants').update({ name: newName }).eq('id', id);
+        if (error) throw error;
+        isEditing = false;
+        loadMyRecords();
+        updateJoinCount();
+    } catch (e) { alert('修改失败: ' + e.message); }
+}
+
+// ==================== 二维码 ====================
+function generateQRAdmin() {
+    const container = document.getElementById('qrcode-admin');
+    container.innerHTML = '';
     const url = window.location.href.split('?')[0].split('#')[0];
-    new QRCode(qrcodeContainer, { text: url, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(container, { text: url, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+
+function generateQRJoin() {
+    const container = document.getElementById('qrcode-join');
+    container.innerHTML = '';
+    const url = window.location.href.split('?')[0].split('#')[0];
+    new QRCode(container, { text: url, width: 160, height: 160, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+
+// ==================== 刷新参与页面 ====================
+async function refreshJoinPage() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
+        if (error) throw error;
+        const mode = data ? data.mode : 'group';
+        const isGroup = mode === 'group';
+
+        document.getElementById('join-title').textContent = isGroup ? '📝 活动报名' : '🎰 幸运抽奖';
+        document.getElementById('join-subtitle').textContent = isGroup ? '填写姓名完成报名，等待管理员分组' : '填写信息参与抽奖，祝您好运！';
+        document.getElementById('join-btn').textContent = isGroup ? '立即报名' : '参与抽奖';
+        document.getElementById('qr-tip').textContent = isGroup ? '📲 扫描上方二维码报名' : '📲 扫描上方二维码参与抽奖';
+        document.getElementById('lottery-result-area').classList.add('hidden');
+        document.getElementById('lottery-pending-msg').style.display = 'none';
+
+        if (isGroup) {
+            updateJoinCount();
+            loadMyRecords();
+        } else {
+            await loadFormFields();
+            updateLotteryCount();
+            loadMyLotteryRecords();
+        }
+        generateQRJoin();
+    } catch (e) { console.error('刷新页面失败:', e); }
 }
 
 // ==================== 初始化 ====================
@@ -553,16 +1123,21 @@ document.getElementById('group-size').addEventListener('input', function() {
 document.getElementById('participant-name').addEventListener('keypress', function(e) { if (e.key === 'Enter') submitJoin(); });
 document.getElementById('admin-password').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPassword(); });
 
-updateJoinCount();
-loadMyRecords();
+refreshJoinPage();
 
 setInterval(() => {
+    if (isEditing) return;
     if (document.getElementById('admin-section').classList.contains('active')) {
-        loadParticipants();
-        loadSettings();
+        if (globalSettings.mode === 'group') {
+            loadParticipants();
+            loadSettings();
+        } else {
+            loadLotteryParticipants();
+            loadPrizes();
+            loadSettings();
+        }
     } else {
-        updateJoinCount();
-        loadMyRecords();
+        refreshJoinPage();
     }
 }, 3000);
 </script>
