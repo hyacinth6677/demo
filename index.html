@@ -1,385 +1,307 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>活动工具</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; }
-        .card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-        h1 { font-size: 24px; text-align: center; margin-bottom: 8px; color: #1a1a1a; }
-        .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 15px; color: #444; }
-        input[type="text"], input[type="number"], input[type="password"], input[type="tel"] {
-            width: 100%; padding: 14px 16px; border: 2px solid #e8e8e8; border-radius: 12px; font-size: 16px;
-            transition: all 0.3s; -webkit-appearance: none;
-        }
-        input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600;
-            cursor: pointer; transition: all 0.3s; -webkit-appearance: none; }
-        .btn-primary { background: #4f46e5; color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-secondary { background: #fff; color: #4f46e5; border: 2px solid #4f46e5; margin-top: 12px; }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-success { background: #10b981; color: #fff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-        .btn-warning { background: #f59e0b; color: #fff; }
-        .btn-small { padding: 8px 14px; font-size: 14px; width: auto; display: inline-block; margin-top: 0; }
-        .success-msg { background: #d1fae5; color: #065f46; padding: 16px; border-radius: 12px; text-align: center;
-            margin-bottom: 20px; font-weight: 500; display: none; animation: slideIn 0.3s ease; }
-        .info-msg { background: #dbeafe; color: #1e40af; padding: 16px; border-radius: 12px; text-align: center;
-            margin-bottom: 20px; font-weight: 500; display: none; }
-        .error-banner { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 12px; text-align: center;
-            margin-bottom: 16px; font-size: 14px; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .stat-item { text-align: center; }
-        .stat-num { font-size: 32px; font-weight: 700; color: #4f46e5; }
-        .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
-        .participant-list, .lottery-list, .prize-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
-        .person-item, .lottery-item, .prize-item { display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; animation: slideIn 0.3s ease; }
-        .person-name { font-weight: 500; font-size: 16px; }
-        .person-time { font-size: 12px; color: #999; }
-        .delete-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-        .edit-btn { background: #dbeafe; color: #2563eb; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
-        .save-btn { background: #d1fae5; color: #065f46; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
-        .cancel-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
-        .group-config { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
-        .group-config .input-group { flex: 1; margin-bottom: 0; }
-        .group-result { margin-top: 20px; }
-        .group-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px;
-            padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
-        .group-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); pointer-events: none; }
-        .group-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .group-members { display: flex; flex-wrap: wrap; gap: 8px; }
-        .member-tag { background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 14px; }
-        .qr-section { text-align: center; padding: 20px; }
-        #qrcode-admin, #qrcode-join { display: inline-block; padding: 16px; background: #fff; border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 12px; }
-        .qr-tip { font-size: 14px; color: #666; }
-        .nav-tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .nav-tab { flex: 1; text-align: center; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 500;
-            cursor: pointer; transition: all 0.3s; border: none; background: transparent; color: #666; }
-        .nav-tab.active { background: #4f46e5; color: #fff; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); }
-        .section { display: none; }
-        .section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .password-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
-            display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
-        .password-mask.show { display: flex; }
-        .password-card { background: #fff; padding: 32px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; }
-        .hidden { display: none !important; }
-        .group-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .group-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .group-color-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .group-color-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .group-color-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .group-color-5 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-        .group-color-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333 !important; }
-        .group-color-7 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333 !important; }
-        .copy-hint { font-size: 12px; color: #999; text-align: center; margin-top: 8px; }
-        .admin-hint { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; }
-        .admin-link { color: #999; font-size: 13px; text-decoration: none; cursor: pointer; background: none; border: none; padding: 8px 16px; }
-        .sync-status { font-size: 12px; color: #999; margin-left: 8px; }
-        .sync-status.online { color: #10b981; }
-        .sync-status.offline { color: #ef4444; }
-        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
-        .toggle-row:last-child { border-bottom: none; }
-        .toggle-label { font-size: 15px; color: #333; }
-        .toggle-desc { font-size: 12px; color: #999; margin-top: 2px; }
-        .toggle-switch { position: relative; width: 48px; height: 26px; background: #e5e7eb; border-radius: 13px;
-            cursor: pointer; transition: all 0.3s; -webkit-appearance: none; appearance: none; border: none; }
-        .toggle-switch:checked { background: #4f46e5; }
-        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px;
-            background: #fff; border-radius: 50%; transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .toggle-switch:checked::after { left: 24px; }
-        .my-records { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-        .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px;
-            background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
-        .record-name { font-weight: 500; }
-        .record-time { font-size: 11px; color: #999; }
-        .record-actions { display: flex; gap: 6px; }
-        .mode-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 8px; }
-        .mode-badge.group { background: #dbeafe; color: #2563eb; }
-        .mode-badge.lottery { background: #fce7f3; color: #db2777; }
-        .prize-won { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .prize-lost { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-        .prize-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-        .lottery-result { text-align: center; padding: 40px 20px; }
-        .lottery-result .emoji { font-size: 64px; margin-bottom: 16px; }
-        .lottery-result .text { font-size: 24px; font-weight: 700; color: #4f46e5; }
-        .lottery-result .sub { font-size: 14px; color: #666; margin-top: 8px; }
-        .draw-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; font-size: 20px;
-            padding: 20px; border-radius: 16px; margin: 20px 0; }
-        .draw-btn:disabled { background: #ccc; cursor: not-allowed; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>智能分组与抽奖工具</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
+.container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+.card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+h1 { font-size: 24px; text-align: center; margin-bottom: 8px; color: #1a1a1a; }
+.subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; }
+.input-group { margin-bottom: 20px; }
+label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 15px; color: #444; }
+input[type="text"], input[type="number"], input[type="password"] { width: 100%; padding: 14px 16px; border: 2px solid #e8e8e8; border-radius: 12px; font-size: 16px; transition: all 0.3s; -webkit-appearance: none; }
+input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
+.btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.3s; -webkit-appearance: none; }
+.btn-primary { background: #4f46e5; color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+.btn-secondary { background: #fff; color: #4f46e5; border: 2px solid #4f46e5; margin-top: 12px; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-success { background: #10b981; color: #fff; }
+.btn-warning { background: #f59e0b; color: #fff; }
+.btn-small { padding: 8px 14px; font-size: 14px; width: auto; display: inline-block; margin-top: 0; }
+.success-msg { background: #d1fae5; color: #065f46; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-weight: 500; display: none; }
+.info-msg { background: #dbeafe; color: #1e40af; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-weight: 500; display: none; }
+.error-banner { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 16px; font-size: 14px; display: none; }
+.stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+.stat-item { text-align: center; }
+.stat-num { font-size: 32px; font-weight: 700; color: #4f46e5; }
+.stat-label { font-size: 13px; color: #666; margin-top: 4px; }
+.participant-list, .lottery-list, .prize-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
+.person-item, .lottery-item, .prize-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; }
+.person-name { font-weight: 500; font-size: 16px; }
+.person-time { font-size: 12px; color: #999; }
+.delete-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.edit-btn { background: #dbeafe; color: #2563eb; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
+.save-btn { background: #d1fae5; color: #065f46; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px; }
+.cancel-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.empty-state { text-align: center; padding: 40px 20px; color: #999; }
+.group-config { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
+.group-config .input-group { flex: 1; margin-bottom: 0; }
+.group-result { margin-top: 20px; }
+.group-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+.group-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+.group-members { display: flex; flex-wrap: wrap; gap: 8px; }
+.member-tag { background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 14px; }
+.qr-section { text-align: center; padding: 20px; }
+#qrcode-admin, #qrcode-join { display: inline-block; padding: 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 12px; }
+.qr-tip { font-size: 14px; color: #666; }
+.nav-tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.nav-tab { flex: 1; text-align: center; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s; border: none; background: transparent; color: #666; }
+.nav-tab.active { background: #4f46e5; color: #fff; }
+.section { display: none; }
+.section.active { display: block; }
+.password-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.password-mask.show { display: flex; }
+.password-card { background: #fff; padding: 32px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; }
+.hidden { display: none !important; }
+.group-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.group-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.group-color-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.group-color-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.group-color-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.group-color-5 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+.group-color-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333 !important; }
+.group-color-7 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333 !important; }
+.admin-hint { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; }
+.admin-link { color: #999; font-size: 13px; text-decoration: none; cursor: pointer; background: none; border: none; padding: 8px 16px; }
+.sync-status { font-size: 12px; color: #999; margin-left: 8px; }
+.sync-status.online { color: #10b981; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 15px; color: #333; }
+.toggle-desc { font-size: 12px; color: #999; margin-top: 2px; }
+.toggle-switch { position: relative; width: 48px; height: 26px; background: #e5e7eb; border-radius: 13px; cursor: pointer; transition: all 0.3s; -webkit-appearance: none; appearance: none; border: none; }
+.toggle-switch:checked { background: #4f46e5; }
+.toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: all 0.3s; }
+.toggle-switch:checked::after { left: 24px; }
+.my-records { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+.record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
+.record-name { font-weight: 500; }
+.record-time { font-size: 11px; color: #999; }
+.mode-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+.mode-badge.group { background: #dbeafe; color: #2563eb; }
+.mode-badge.lottery { background: #fce7f3; color: #db2777; }
+.prize-won { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.prize-lost { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+.prize-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+.lottery-result { text-align: center; padding: 40px 20px; }
+.lottery-result .emoji { font-size: 64px; margin-bottom: 16px; }
+.lottery-result .text { font-size: 24px; font-weight: 700; color: #4f46e5; }
+.lottery-result .sub { font-size: 14px; color: #666; margin-top: 8px; }
+.draw-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; font-size: 20px; padding: 20px; border-radius: 16px; margin: 20px 0; }
+</style>
 <base target="_blank">
 </head>
 <body>
 
 <div class="container">
-    <div class="nav-tabs" id="nav-tabs">
-        <button class="nav-tab active" data-tab="join" onclick="switchTab('join')">📱 扫码参与</button>
-        <button class="nav-tab" data-tab="admin" onclick="switchTab('admin')">🔐 管理后台</button>
-    </div>
+<div class="nav-tabs" id="nav-tabs">
+<button class="nav-tab active" onclick="switchTab('join')">📱 扫码参与</button>
+<button class="nav-tab" onclick="switchTab('admin')">🔐 管理后台</button>
+</div>
 
-    <!-- 参与者页面 -->
-    <div id="join-section" class="section active">
-        <div class="card">
-            <h1 id="join-title">📝 活动报名</h1>
-            <p class="subtitle" id="join-subtitle">填写信息完成报名，等待管理员分组</p>
+<div id="join-section" class="section active">
+<div class="card">
+<h1 id="join-title">📝 活动报名</h1>
+<p class="subtitle" id="join-subtitle">填写信息完成报名，等待管理员分组</p>
+<div id="db-error" class="error-banner hidden">⚠️ 数据库连接失败</div>
+<div class="success-msg" id="join-success">✅ 报名成功！</div>
+<div class="info-msg" id="lottery-pending-msg">⏳ 参与成功，请等待开奖！</div>
+<div id="join-form-area">
+<div class="input-group">
+<label>姓名 <span style="color:#ef4444">*</span></label>
+<input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
+</div>
+</div>
+<button class="btn btn-primary" onclick="submitJoin()" id="join-btn">立即报名</button>
+<div class="lottery-result hidden" id="lottery-result-area">
+<div class="emoji" id="result-emoji">🎉</div>
+<div class="text" id="result-text">恭喜中奖！</div>
+<div class="sub" id="result-sub">您获得了奖品</div>
+</div>
+<div style="margin-top: 24px; text-align: center;">
+<div style="font-size: 13px; color: #999; margin-bottom: 8px;">已参与人数</div>
+<div style="font-size: 36px; font-weight: 700; color: #4f46e5;" id="join-count">0</div>
+</div>
+<div class="qr-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee;">
+<div id="qrcode-join"></div>
+<div class="qr-tip" id="qr-tip">📲 扫描上方二维码参与</div>
+</div>
+<div class="my-records" id="my-records-area">
+<h4>📋 我的记录</h4>
+<div id="my-records-list"><div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div></div>
+</div>
+<div class="admin-hint">
+<button class="admin-link" onclick="switchTab('admin')">→ 管理员入口</button>
+</div>
+</div>
+</div>
 
-            <div id="db-error" class="error-banner hidden">⚠️ 数据库连接失败，部分功能不可用</div>
+<div id="admin-section" class="section">
+<div class="card">
+<h1>⚙️ 管理控制台</h1>
+<p class="subtitle">选择活动模式并管理数据</p>
+<div id="admin-db-error" class="error-banner hidden">⚠️ 数据库连接失败</div>
+<div class="stats">
+<div class="stat-item"><div class="stat-num" id="admin-count">0</div><div class="stat-label" id="admin-count-label">报名人数</div></div>
+<div class="stat-item"><div class="stat-num" id="group-num">0</div><div class="stat-label" id="admin-label2">分组数</div></div>
+</div>
+<div class="qr-section">
+<div id="qrcode-admin"></div>
+<div class="qr-tip" id="admin-qr-tip">📲 让参与者扫描上方二维码</div>
+</div>
+</div>
 
-            <div class="success-msg" id="join-success">✅ 报名成功！</div>
-            <div class="info-msg" id="lottery-pending-msg">⏳ 参与成功，请等待开奖！</div>
+<div class="card">
+<h3 style="margin-bottom: 16px;">🎯 活动模式</h3>
+<div class="toggle-row">
+<div><div class="toggle-label">当前模式</div><div class="toggle-desc">切换分组或抽奖</div></div>
+<div style="display:flex; gap:8px; align-items:center;">
+<span class="mode-badge group" id="mode-badge-group">分组</span>
+<span class="mode-badge lottery hidden" id="mode-badge-lottery">抽奖</span>
+</div>
+</div>
+<div style="display:flex; gap:12px; margin-top:16px;">
+<button class="btn btn-primary" onclick="setMode('group')" style="flex:1; font-size:14px; padding:12px;">📊 分组模式</button>
+<button class="btn btn-warning" onclick="setMode('lottery')" style="flex:1; font-size:14px; padding:12px;">🎲 抽奖模式</button>
+</div>
+</div>
 
-            <div id="join-form-area">
-                <div class="input-group">
-                    <label>姓名 <span style="color:#ef4444">*</span></label>
-                    <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
-                </div>
-            </div>
+<div id="group-settings" class="card">
+<h3 style="margin-bottom: 16px;">⚙️ 分组设置</h3>
+<div class="toggle-row">
+<div><div class="toggle-label">允许重复提交</div><div class="toggle-desc">同一用户可多次报名</div></div>
+<input type="checkbox" class="toggle-switch" id="setting-duplicate" onchange="saveSettings()">
+</div>
+<div class="toggle-row">
+<div><div class="toggle-label">允许用户修改</div><div class="toggle-desc">用户可修改自己提交的姓名</div></div>
+<input type="checkbox" class="toggle-switch" id="setting-edit" onchange="saveSettings()">
+</div>
+<div class="group-config" style="margin-top:16px;">
+<div class="input-group"><label>每组人数</label><input type="number" id="group-size" value="4" min="2" max="50"></div>
+<button class="btn btn-success" onclick="generateGroups()" style="width: auto; padding: 14px 24px;">开始分组</button>
+</div>
+<div class="group-result" id="group-result"></div>
+</div>
 
-            <button class="btn btn-primary" onclick="submitJoin()" id="join-btn">立即报名</button>
+<div id="lottery-settings" class="card hidden">
+<h3 style="margin-bottom: 16px;">🎰 抽奖设置</h3>
+<div class="toggle-row">
+<div><div class="toggle-label">抽奖方式</div><div class="toggle-desc">实时开奖或手动开奖</div></div>
+<div style="display:flex; gap:8px;">
+<button class="btn btn-small btn-primary" id="btn-realtime" onclick="setLotteryType('realtime')">实时</button>
+<button class="btn btn-small btn-secondary" id="btn-manual" onclick="setLotteryType('manual')">手动</button>
+</div>
+</div>
+<h4 style="margin: 20px 0 12px; font-size: 16px;">🎁 奖品设置</h4>
+<div class="prize-list" id="prize-list"><div style="text-align:center; color:#999; padding:12px;">暂无奖品</div></div>
+<div style="display:flex; gap:8px; margin-top:12px;">
+<input type="text" id="prize-name" placeholder="奖品名称" style="flex:2;">
+<input type="number" id="prize-qty" placeholder="数量" value="1" min="1" style="flex:1;">
+<button class="btn btn-small btn-success" onclick="addPrize()" style="width:auto;">添加</button>
+</div>
+<h4 style="margin: 20px 0 12px; font-size: 16px;">📝 表单字段设置</h4>
+<div class="prize-list" id="form-fields-list"><div style="text-align:center; color:#999; padding:12px;">暂无自定义字段</div></div>
+<div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+<input type="text" id="field-label" placeholder="字段名称（如：手机号）" style="flex:2;">
+<input type="text" id="field-key" placeholder="标识（如：phone）" style="flex:1;">
+<label style="display:flex; align-items:center; gap:4px; font-size:13px; white-space:nowrap;"><input type="checkbox" id="field-required" style="width:auto;"> 必填</label>
+<button class="btn btn-small btn-success" onclick="addFormField()" style="width:auto;">添加</button>
+</div>
+<button class="btn btn-primary draw-btn" id="manual-draw-btn" onclick="manualDraw()" style="display:none;">🎲 点击开奖</button>
+</div>
 
-            <div class="lottery-result hidden" id="lottery-result-area">
-                <div class="emoji" id="result-emoji">🎉</div>
-                <div class="text" id="result-text">恭喜中奖！</div>
-                <div class="sub" id="result-sub">您获得了：iPhone 15</div>
-            </div>
+<div id="group-participants-card" class="card">
+<h3 style="margin-bottom: 16px;">👥 报名名单 <span id="sync-indicator" class="sync-status">同步中...</span></h3>
+<div class="participant-list" id="participant-list">
+<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无报名人员</div></div>
+</div>
+<button class="btn btn-danger" onclick="clearAll()" style="font-size: 14px; padding: 12px;">🗑️ 清空所有数据</button>
+</div>
 
-            <div style="margin-top: 24px; text-align: center;">
-                <div style="font-size: 13px; color: #999; margin-bottom: 8px;">已参与人数</div>
-                <div style="font-size: 36px; font-weight: 700; color: #4f46e5;" id="join-count">0</div>
-            </div>
-
-            <div class="qr-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee;">
-                <div id="qrcode-join"></div>
-                <div class="qr-tip" id="qr-tip">📲 扫描上方二维码参与</div>
-            </div>
-
-            <div class="my-records" id="my-records-area">
-                <h4>📋 我的记录</h4>
-                <div id="my-records-list">
-                    <div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>
-                </div>
-            </div>
-
-            <div class="admin-hint">
-                <button class="admin-link" onclick="switchTab('admin')">→ 管理员入口</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 管理后台 -->
-    <div id="admin-section" class="section">
-        <div class="card">
-            <h1>⚙️ 管理控制台</h1>
-            <p class="subtitle">选择活动模式并管理数据</p>
-
-            <div id="admin-db-error" class="error-banner hidden">⚠️ 数据库连接失败</div>
-
-            <div class="stats">
-                <div class="stat-item"><div class="stat-num" id="admin-count">0</div><div class="stat-label" id="admin-count-label">报名人数</div></div>
-                <div class="stat-item"><div class="stat-num" id="group-num">0</div><div class="stat-label" id="admin-label2">分组数</div></div>
-            </div>
-
-            <div class="qr-section">
-                <div id="qrcode-admin"></div>
-                <div class="qr-tip" id="admin-qr-tip">📲 让参与者扫描上方二维码</div>
-            </div>
-        </div>
-
-        <!-- 模式切换 -->
-        <div class="card">
-            <h3 style="margin-bottom: 16px;">🎯 活动模式</h3>
-            <div class="toggle-row">
-                <div>
-                    <div class="toggle-label">当前模式</div>
-                    <div class="toggle-desc">切换分组或抽奖</div>
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span class="mode-badge group" id="mode-badge-group">分组</span>
-                    <span class="mode-badge lottery hidden" id="mode-badge-lottery">抽奖</span>
-                </div>
-            </div>
-            <div style="display:flex; gap:12px; margin-top:16px;">
-                <button class="btn btn-primary" onclick="setMode('group')" style="flex:1; font-size:14px; padding:12px;">📊 分组模式</button>
-                <button class="btn btn-warning" onclick="setMode('lottery')" style="flex:1; font-size:14px; padding:12px;">🎲 抽奖模式</button>
-            </div>
-        </div>
-
-        <!-- 分组设置 -->
-        <div id="group-settings" class="card">
-            <h3 style="margin-bottom: 16px;">⚙️ 分组设置</h3>
-            <div class="toggle-row">
-                <div><div class="toggle-label">允许重复提交</div><div class="toggle-desc">同一用户可多次报名</div></div>
-                <input type="checkbox" class="toggle-switch" id="setting-duplicate" onchange="saveSettings()">
-            </div>
-            <div class="toggle-row">
-                <div><div class="toggle-label">允许用户修改</div><div class="toggle-desc">用户可修改自己提交的姓名</div></div>
-                <input type="checkbox" class="toggle-switch" id="setting-edit" onchange="saveSettings()">
-            </div>
-            <div class="group-config" style="margin-top:16px;">
-                <div class="input-group">
-                    <label>每组人数</label>
-                    <input type="number" id="group-size" value="4" min="2" max="50">
-                </div>
-                <button class="btn btn-success" onclick="generateGroups()" style="width: auto; padding: 14px 24px;">开始分组</button>
-            </div>
-            <div class="group-result" id="group-result"></div>
-        </div>
-
-        <!-- 抽奖设置 -->
-        <div id="lottery-settings" class="card hidden">
-            <h3 style="margin-bottom: 16px;">🎰 抽奖设置</h3>
-
-            <div class="toggle-row">
-                <div><div class="toggle-label">抽奖方式</div><div class="toggle-desc">实时开奖或手动开奖</div></div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-small btn-primary" id="btn-realtime" onclick="setLotteryType('realtime')">实时</button>
-                    <button class="btn btn-small btn-secondary" id="btn-manual" onclick="setLotteryType('manual')">手动</button>
-                </div>
-            </div>
-
-            <h4 style="margin: 20px 0 12px; font-size: 16px;">🎁 奖品设置</h4>
-            <div class="prize-list" id="prize-list">
-                <div style="text-align:center; color:#999; padding:12px;">暂无奖品</div>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:12px;">
-                <input type="text" id="prize-name" placeholder="奖品名称" style="flex:2;">
-                <input type="number" id="prize-qty" placeholder="数量" value="1" min="1" style="flex:1;">
-                <button class="btn btn-small btn-success" onclick="addPrize()" style="width:auto;">添加</button>
-            </div>
-
-            <h4 style="margin: 20px 0 12px; font-size: 16px;">📝 表单字段设置</h4>
-            <div class="prize-list" id="form-fields-list">
-                <div style="text-align:center; color:#999; padding:12px;">暂无自定义字段</div>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
-                <input type="text" id="field-label" placeholder="字段名称（如：手机号）" style="flex:2;">
-                <input type="text" id="field-key" placeholder="标识（如：phone）" style="flex:1;">
-                <label style="display:flex; align-items:center; gap:4px; font-size:13px; white-space:nowrap;">
-                    <input type="checkbox" id="field-required" style="width:auto;"> 必填
-                </label>
-                <button class="btn btn-small btn-success" onclick="addFormField()" style="width:auto;">添加</button>
-            </div>
-
-            <button class="btn btn-primary draw-btn" id="manual-draw-btn" onclick="manualDraw()" style="display:none;">
-                🎲 点击开奖
-            </button>
-        </div>
-
-        <!-- 分组名单 -->
-        <div id="group-participants-card" class="card">
-            <h3 style="margin-bottom: 16px;">👥 报名名单 <span id="sync-indicator" class="sync-status">同步中...</span></h3>
-            <div class="participant-list" id="participant-list">
-                <div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无报名人员</div></div>
-            </div>
-            <button class="btn btn-danger" onclick="clearAll()" style="font-size: 14px; padding: 12px;">🗑️ 清空所有数据</button>
-        </div>
-
-        <!-- 抽奖名单 -->
-        <div id="lottery-participants-card" class="card hidden">
-            <h3 style="margin-bottom: 16px;">🎰 抽奖名单 <span id="lottery-sync-indicator" class="sync-status">同步中...</span></h3>
-            <div class="lottery-list" id="lottery-list">
-                <div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无参与者</div></div>
-            </div>
-            <button class="btn btn-danger" onclick="clearLottery()" style="font-size: 14px; padding: 12px;">🗑️ 清空抽奖数据</button>
-        </div>
-    </div>
+<div id="lottery-participants-card" class="card hidden">
+<h3 style="margin-bottom: 16px;">🎰 抽奖名单 <span id="lottery-sync-indicator" class="sync-status">同步中...</span></h3>
+<div class="lottery-list" id="lottery-list">
+<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无参与者</div></div>
+</div>
+<button class="btn btn-danger" onclick="clearLottery()" style="font-size: 14px; padding: 12px;">🗑️ 清空抽奖数据</button>
+</div>
+</div>
 </div>
 
 <div class="password-mask" id="password-mask">
-    <div class="password-card">
-        <h2>🔐 管理员验证</h2>
-        <p>请输入管理密码进入控制台</p>
-        <div class="input-group" style="margin-bottom: 20px;">
-            <input type="password" id="admin-password" placeholder="请输入管理密码" maxlength="10">
-        </div>
-        <button class="btn btn-primary" onclick="checkPassword()">进入管理</button>
-        <div style="margin-top: 12px; font-size: 13px; color: #999; cursor: pointer;" onclick="backToJoin()">← 返回参与页面</div>
-    </div>
+<div class="password-card">
+<h2>🔐 管理员验证</h2>
+<p>请输入管理密码进入控制台</p>
+<div class="input-group" style="margin-bottom: 20px;">
+<input type="password" id="admin-password" placeholder="请输入管理密码" maxlength="10">
+</div>
+<button class="btn btn-primary" onclick="checkPassword()">进入管理</button>
+<div style="margin-top: 12px; font-size: 13px; color: #999; cursor: pointer;" onclick="backToJoin()">← 返回参与页面</div>
+</div>
 </div>
 
 <script>
-// ==================== Supabase 配置 ====================
-const SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
+// ===== Supabase 配置 =====
+var SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
 
-let supabase = null;
-let dbReady = false;
-
+var supabase = null;
+var dbReady = false;
 try {
     if (window.supabase && window.supabase.createClient) {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbReady = true;
-    } else {
-        console.error('Supabase 库未加载');
     }
 } catch (e) {
-    console.error('Supabase 初始化失败:', e);
+    console.error('Supabase init failed:', e);
 }
 
-const ADMIN_PASSWORD = '1234';
-
-// 兼容的设备ID生成（不使用 crypto.randomUUID）
-let deviceId = localStorage.getItem('grouping_device_id');
+var ADMIN_PASSWORD = '1234';
+var deviceId = localStorage.getItem('grouping_device_id');
 if (!deviceId) {
-    deviceId = Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9) + '-' + Math.random().toString(36).substr(2, 5);
+    deviceId = Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('grouping_device_id', deviceId);
 }
 
-let globalSettings = { allow_duplicate: false, allow_edit: false, mode: 'group', lottery_type: 'realtime' };
-let isEditing = false;
-let currentFormFields = [];
-let currentPrizes = [];
+var globalSettings = { allow_duplicate: false, allow_edit: false, mode: 'group', lottery_type: 'realtime' };
+var isEditing = false;
+var currentFormFields = [];
+var currentPrizes = [];
 
-// ==================== 页面切换 ====================
+// ===== 页面切换 =====
 function switchTab(tab) {
     if (tab === 'admin') {
         document.getElementById('password-mask').classList.add('show');
         document.getElementById('admin-password').value = '';
-        setTimeout(() => document.getElementById('admin-password').focus(), 100);
+        setTimeout(function() { document.getElementById('admin-password').focus(); }, 100);
         return;
     }
-    document.querySelectorAll('.nav-tab').forEach(t => {
-        t.classList.remove('active');
-        if (t.dataset.tab === tab) t.classList.add('active');
-    });
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     document.getElementById(tab + '-section').classList.add('active');
     if (tab === 'join') refreshJoinPage();
 }
 
 function backToJoin() {
     document.getElementById('password-mask').classList.remove('show');
-    document.querySelectorAll('.nav-tab').forEach(t => {
-        t.classList.remove('active');
-        if (t.dataset.tab === 'join') t.classList.add('active');
-    });
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     document.getElementById('join-section').classList.add('active');
     refreshJoinPage();
 }
 
 function checkPassword() {
-    const input = document.getElementById('admin-password').value;
+    var input = document.getElementById('admin-password').value;
     if (input === ADMIN_PASSWORD) {
         document.getElementById('password-mask').classList.remove('show');
-        document.querySelectorAll('.nav-tab').forEach(t => {
-            t.classList.remove('active');
-            if (t.dataset.tab === 'admin') t.classList.add('active');
-        });
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
         document.getElementById('admin-section').classList.add('active');
         loadAdminData();
     } else {
@@ -387,35 +309,29 @@ function checkPassword() {
     }
 }
 
-// ==================== 模式管理 ====================
-async function setMode(mode) {
+// ===== 模式管理 =====
+function setMode(mode) {
     if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
-    try {
-        const { error } = await supabase.from('settings').upsert({ id: 1, mode: mode });
-        if (error) throw error;
+    supabase.from('settings').upsert({ id: 1, mode: mode }).then(function(result) {
+        if (result.error) { alert('切换失败: ' + result.error.message); return; }
         globalSettings.mode = mode;
         updateModeUI();
         refreshJoinPage();
-    } catch (e) {
-        alert('切换模式失败: ' + e.message);
-    }
+    });
 }
 
-async function setLotteryType(type) {
+function setLotteryType(type) {
     if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
-    try {
-        const { error } = await supabase.from('settings').upsert({ id: 1, lottery_type: type });
-        if (error) throw error;
+    supabase.from('settings').upsert({ id: 1, lottery_type: type }).then(function(result) {
+        if (result.error) { alert('设置失败: ' + result.error.message); return; }
         globalSettings.lottery_type = type;
         updateLotteryTypeUI();
         refreshJoinPage();
-    } catch (e) {
-        alert('设置失败: ' + e.message);
-    }
+    });
 }
 
 function updateModeUI() {
-    const isGroup = globalSettings.mode === 'group';
+    var isGroup = globalSettings.mode === 'group';
     document.getElementById('mode-badge-group').classList.toggle('hidden', !isGroup);
     document.getElementById('mode-badge-lottery').classList.toggle('hidden', isGroup);
     document.getElementById('group-settings').classList.toggle('hidden', !isGroup);
@@ -428,139 +344,137 @@ function updateModeUI() {
 }
 
 function updateLotteryTypeUI() {
-    const isRealtime = globalSettings.lottery_type === 'realtime';
+    var isRealtime = globalSettings.lottery_type === 'realtime';
     document.getElementById('btn-realtime').className = isRealtime ? 'btn btn-small btn-primary' : 'btn btn-small btn-secondary';
     document.getElementById('btn-manual').className = isRealtime ? 'btn btn-small btn-secondary' : 'btn btn-small btn-primary';
     document.getElementById('manual-draw-btn').style.display = isRealtime ? 'none' : 'block';
 }
 
-// ==================== 加载管理数据 ====================
-async function loadAdminData() {
+// ===== 加载管理数据 =====
+function loadAdminData() {
     if (!dbReady || !supabase) {
         document.getElementById('admin-db-error').classList.remove('hidden');
         return;
     }
     document.getElementById('admin-db-error').classList.add('hidden');
-    await loadSettings();
-    updateModeUI();
-    updateLotteryTypeUI();
-    if (globalSettings.mode === 'group') {
-        loadParticipants();
-    } else {
-        loadPrizes();
-        loadFormFields();
-        loadLotteryParticipants();
-    }
-    generateQRAdmin();
-}
-
-async function loadSettings() {
-    if (!dbReady || !supabase) return;
-    try {
-        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
-        if (error) throw error;
-        if (data) {
-            globalSettings = { ...globalSettings, ...data };
-            document.getElementById('setting-duplicate').checked = data.allow_duplicate || false;
-            document.getElementById('setting-edit').checked = data.allow_edit || false;
+    loadSettings().then(function() {
+        updateModeUI();
+        updateLotteryTypeUI();
+        if (globalSettings.mode === 'group') {
+            loadParticipants();
         } else {
-            // 无数据则插入默认
-            await supabase.from('settings').insert({ id: 1, mode: 'group', lottery_type: 'realtime', allow_duplicate: false, allow_edit: false });
+            loadPrizes();
+            loadFormFields();
+            loadLotteryParticipants();
         }
-    } catch (e) {
-        console.error('加载设置失败:', e);
-    }
+        generateQRAdmin();
+    });
 }
 
-async function saveSettings() {
+function loadSettings() {
+    if (!dbReady || !supabase) return Promise.resolve();
+    return supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(function(result) {
+        if (result.error) { console.error('loadSettings error:', result.error); return; }
+        if (result.data) {
+            globalSettings = Object.assign(globalSettings, result.data);
+            document.getElementById('setting-duplicate').checked = !!result.data.allow_duplicate;
+            document.getElementById('setting-edit').checked = !!result.data.allow_edit;
+        } else {
+            supabase.from('settings').insert({ id: 1, mode: 'group', lottery_type: 'realtime', allow_duplicate: false, allow_edit: false });
+        }
+    });
+}
+
+function saveSettings() {
     if (!dbReady || !supabase) return;
-    const allowDuplicate = document.getElementById('setting-duplicate').checked;
-    const allowEdit = document.getElementById('setting-edit').checked;
-    try {
-        const { error } = await supabase.from('settings').upsert({
-            id: 1, allow_duplicate: allowDuplicate, allow_edit: allowEdit,
-            mode: globalSettings.mode, lottery_type: globalSettings.lottery_type
-        });
-        if (error) throw error;
-        globalSettings.allow_duplicate = allowDuplicate;
-        globalSettings.allow_edit = allowEdit;
-    } catch (e) {
-        alert('保存设置失败: ' + e.message);
-    }
+    var allowDuplicate = document.getElementById('setting-duplicate').checked;
+    var allowEdit = document.getElementById('setting-edit').checked;
+    supabase.from('settings').upsert({
+        id: 1, allow_duplicate: allowDuplicate, allow_edit: allowEdit,
+        mode: globalSettings.mode, lottery_type: globalSettings.lottery_type
+    }).then(function(result) {
+        if (result.error) alert('保存失败: ' + result.error.message);
+        else {
+            globalSettings.allow_duplicate = allowDuplicate;
+            globalSettings.allow_edit = allowEdit;
+        }
+    });
 }
 
-// ==================== 分组功能 ====================
-async function loadParticipants() {
+// ===== 分组功能 =====
+function loadParticipants() {
     if (!dbReady || !supabase) { showSyncStatus('数据库未就绪', false); return; }
     showSyncStatus('同步中...', true);
-    try {
-        const { data, error } = await supabase.from('participants').select('*').order('created_at', { ascending: true });
-        if (error) throw error;
-        renderParticipantList(data || []);
-        updateJoinCountDisplay(data ? data.length : 0);
+    supabase.from('participants').select('*').order('created_at', { ascending: true }).then(function(result) {
+        if (result.error) { showSyncStatus('同步失败', false); return; }
+        renderParticipantList(result.data || []);
+        updateJoinCountDisplay((result.data || []).length);
         showSyncStatus('已同步', true);
-    } catch (e) {
-        showSyncStatus('同步失败', false);
-    }
+    });
 }
 
-async function submitJoin() {
+function submitJoin() {
     if (globalSettings.mode === 'lottery') {
         submitLottery();
         return;
     }
-    const nameInput = document.getElementById('participant-name');
-    const name = nameInput.value.trim();
+    var name = document.getElementById('participant-name').value.trim();
     if (!name) { alert('请输入姓名'); return; }
     if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
 
-    try {
-        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
-        const settings = settingsData || { allow_duplicate: false };
+    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(function(sResult) {
+        var settings = sResult.data || { allow_duplicate: false };
         if (!settings.allow_duplicate) {
-            const { data: existing } = await supabase.from('participants').select('id').eq('user_id', deviceId);
-            if (existing && existing.length > 0) { alert('您已报名，请勿重复提交'); return; }
+            supabase.from('participants').select('id').eq('user_id', deviceId).then(function(eResult) {
+                if (eResult.data && eResult.data.length > 0) { alert('您已报名，请勿重复提交'); return; }
+                doSubmit(name);
+            });
+        } else {
+            doSubmit(name);
         }
-        const { error } = await supabase.from('participants').insert([{ name: name, user_id: deviceId }]);
-        if (error) throw error;
-        nameInput.value = '';
+    });
+}
+
+function doSubmit(name) {
+    supabase.from('participants').insert([{ name: name, user_id: deviceId }]).then(function(result) {
+        if (result.error) { alert('报名失败: ' + result.error.message); return; }
+        document.getElementById('participant-name').value = '';
         document.getElementById('join-success').style.display = 'block';
         updateJoinCount();
         loadMyRecords();
-        setTimeout(() => { document.getElementById('join-success').style.display = 'none'; }, 3000);
-    } catch (e) {
-        alert('报名失败: ' + e.message);
-    }
+        setTimeout(function() { document.getElementById('join-success').style.display = 'none'; }, 3000);
+    });
 }
 
-async function deletePerson(id) {
+function deletePerson(id) {
     if (!confirm('确定删除该人员？')) return;
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('participants').delete().eq('id', id);
-        if (error) throw error;
-        loadParticipants();
-    } catch (e) { alert('删除失败: ' + e.message); }
+    supabase.from('participants').delete().eq('id', id).then(function(result) {
+        if (result.error) alert('删除失败: ' + result.error.message);
+        else loadParticipants();
+    });
 }
 
-async function clearAll() {
+function clearAll() {
     if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('participants').delete().neq('id', 0);
-        if (error) throw error;
-        loadParticipants();
-        updateJoinCount();
-        loadMyRecords();
-    } catch (e) { alert('清空失败: ' + e.message); }
+    supabase.from('participants').delete().neq('id', 0).then(function(result) {
+        if (result.error) alert('清空失败: ' + result.error.message);
+        else { loadParticipants(); updateJoinCount(); loadMyRecords(); }
+    });
 }
 
 function renderParticipantList(data) {
-    const listEl = document.getElementById('participant-list');
+    var listEl = document.getElementById('participant-list');
     if (!data || data.length === 0) {
-        listEl.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无报名人员</div></div>`;
+        listEl.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无报名人员</div></div>';
     } else {
-        listEl.innerHTML = data.map(p => `<div class="person-item"><div><div class="person-name">${p.name}</div><div class="person-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div></div><button class="delete-btn" onclick="deletePerson(${p.id})">删除</button></div>`).join('');
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var p = data[i];
+            html += '<div class="person-item"><div><div class="person-name">' + p.name + '</div><div class="person-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><button class="delete-btn" onclick="deletePerson(' + p.id + ')">删除</button></div>';
+        }
+        listEl.innerHTML = html;
     }
 }
 
@@ -569,65 +483,78 @@ function updateJoinCountDisplay(count) {
     document.getElementById('join-count').textContent = count;
 }
 
-async function updateJoinCount() {
+function updateJoinCount() {
     if (!dbReady || !supabase) { document.getElementById('join-count').textContent = '0'; return; }
-    try {
-        const { data, error } = await supabase.from('participants').select('*');
-        if (error) throw error;
-        document.getElementById('join-count').textContent = data ? data.length : 0;
-    } catch (e) { document.getElementById('join-count').textContent = '0'; }
+    supabase.from('participants').select('*').then(function(result) {
+        document.getElementById('join-count').textContent = (result.data || []).length;
+    });
 }
 
 function showSyncStatus(text, isOnline) {
-    const el = document.getElementById('sync-indicator');
+    var el = document.getElementById('sync-indicator');
     el.textContent = text;
     el.className = 'sync-status ' + (isOnline ? 'online' : 'offline');
 }
 
-async function generateGroups() {
+function generateGroups() {
     if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
-    const size = parseInt(document.getElementById('group-size').value);
+    var size = parseInt(document.getElementById('group-size').value);
     if (!size || size < 2) { alert('每组至少2人'); return; }
-    try {
-        const { data, error } = await supabase.from('participants').select('*');
-        if (error) throw error;
-        if (!data || data.length === 0) { alert('暂无报名人员'); return; }
-        const shuffled = [...data];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    supabase.from('participants').select('*').then(function(result) {
+        if (result.error) { alert('分组失败: ' + result.error.message); return; }
+        var data = result.data || [];
+        if (data.length === 0) { alert('暂无报名人员'); return; }
+        var shuffled = data.slice();
+        for (var i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = temp;
         }
-        const groups = [];
-        for (let i = 0; i < shuffled.length; i += size) groups.push(shuffled.slice(i, i + size));
+        var groups = [];
+        for (var k = 0; k < shuffled.length; k += size) {
+            groups.push(shuffled.slice(k, k + size));
+        }
         renderGroups(groups);
         updateGroupNum(groups.length);
-    } catch (e) { alert('分组失败: ' + e.message); }
+    });
 }
 
 function renderGroups(groups) {
-    const container = document.getElementById('group-result');
+    var container = document.getElementById('group-result');
     if (!groups || groups.length === 0) return;
-    container.innerHTML = `<div style="margin-bottom: 12px; font-weight: 600; color: #333;">分组结果（共 ${groups.length} 组）：</div>` + groups.map((group, idx) => `<div class="group-card group-color-${idx % 8}"><div class="group-title"><span>第 ${idx + 1} 组</span><span style="font-size: 14px; opacity: 0.9;">(${group.length}人)</span></div><div class="group-members">${group.map(p => `<span class="member-tag">${p.name}</span>`).join('')}</div></div>`).join('') + `<button class="btn btn-secondary" onclick="copyResult()">📋 复制分组结果</button>`;
+    var html = '<div style="margin-bottom: 12px; font-weight: 600; color: #333;">分组结果（共 ' + groups.length + ' 组）：</div>';
+    for (var i = 0; i < groups.length; i++) {
+        var group = groups[i];
+        html += '<div class="group-card group-color-' + (i % 8) + '"><div class="group-title"><span>第 ' + (i + 1) + ' 组</span><span style="font-size: 14px; opacity: 0.9;">(' + group.length + '人)</span></div><div class="group-members">';
+        for (var j = 0; j < group.length; j++) {
+            html += '<span class="member-tag">' + group[j].name + '</span>';
+        }
+        html += '</div></div>';
+    }
+    html += '<button class="btn btn-secondary" onclick="copyResult()">📋 复制分组结果</button>';
+    container.innerHTML = html;
 }
 
 function updateGroupNum(num) { document.getElementById('group-num').textContent = num || 0; }
 
 function copyResult() {
-    const cards = document.querySelectorAll('.group-card');
+    var cards = document.querySelectorAll('.group-card');
     if (cards.length === 0) return;
-    let text = '🎲 随机分组结果：
+    var text = '🎲 随机分组结果：
 
 ';
-    cards.forEach((card, idx) => {
-        const title = card.querySelector('.group-title').textContent.trim();
-        const members = Array.from(card.querySelectorAll('.member-tag')).map(t => t.textContent).join('、');
-        text += `${title}：${members}
-`;
-    });
+    for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var title = card.querySelector('.group-title').textContent.trim();
+        var tags = card.querySelectorAll('.member-tag');
+        var members = [];
+        for (var j = 0; j < tags.length; j++) members.push(tags[j].textContent);
+        text += title + '：' + members.join('、') + '
+';
+    }
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => alert('已复制'));
+        navigator.clipboard.writeText(text).then(function() { alert('已复制'); });
     } else {
-        const textarea = document.createElement('textarea');
+        var textarea = document.createElement('textarea');
         textarea.value = text;
         document.body.appendChild(textarea);
         textarea.select();
@@ -637,197 +564,178 @@ function copyResult() {
     }
 }
 
-// ==================== 抽奖功能 ====================
-async function loadPrizes() {
+// ===== 抽奖功能 =====
+function loadPrizes() {
     if (!dbReady || !supabase) return;
-    try {
-        const { data, error } = await supabase.from('prizes').select('*').order('created_at', { ascending: true });
-        if (error) throw error;
-        currentPrizes = data || [];
+    supabase.from('prizes').select('*').order('created_at', { ascending: true }).then(function(result) {
+        if (result.error) { console.error('loadPrizes error:', result.error); return; }
+        currentPrizes = result.data || [];
         renderPrizes();
         document.getElementById('group-num').textContent = currentPrizes.length;
-    } catch (e) { console.error('加载奖品失败:', e); }
+    });
 }
 
 function renderPrizes() {
-    const container = document.getElementById('prize-list');
+    var container = document.getElementById('prize-list');
     if (!currentPrizes || currentPrizes.length === 0) {
         container.innerHTML = '<div style="text-align:center; color:#999; padding:12px;">暂无奖品</div>';
         return;
     }
-    container.innerHTML = currentPrizes.map(p => `
-        <div class="prize-item">
-            <div>
-                <div class="person-name">${p.name}</div>
-                <div class="person-time">剩余 ${p.remaining} / ${p.quantity} 个</div>
-            </div>
-            <button class="delete-btn" onclick="deletePrize(${p.id})">删除</button>
-        </div>
-    `).join('');
+    var html = '';
+    for (var i = 0; i < currentPrizes.length; i++) {
+        var p = currentPrizes[i];
+        html += '<div class="prize-item"><div><div class="person-name">' + p.name + '</div><div class="person-time">剩余 ' + p.remaining + ' / ' + p.quantity + ' 个</div></div><button class="delete-btn" onclick="deletePrize(' + p.id + ')">删除</button></div>';
+    }
+    container.innerHTML = html;
 }
 
-async function addPrize() {
-    const name = document.getElementById('prize-name').value.trim();
-    const qty = parseInt(document.getElementById('prize-qty').value) || 1;
+function addPrize() {
+    var name = document.getElementById('prize-name').value.trim();
+    var qty = parseInt(document.getElementById('prize-qty').value) || 1;
     if (!name) { alert('请输入奖品名称'); return; }
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('prizes').insert([{ name: name, quantity: qty, remaining: qty }]);
-        if (error) throw error;
+    supabase.from('prizes').insert([{ name: name, quantity: qty, remaining: qty }]).then(function(result) {
+        if (result.error) { alert('添加失败: ' + result.error.message); return; }
         document.getElementById('prize-name').value = '';
         document.getElementById('prize-qty').value = '1';
         loadPrizes();
-    } catch (e) { alert('添加失败: ' + e.message); }
+    });
 }
 
-async function deletePrize(id) {
+function deletePrize(id) {
     if (!confirm('确定删除该奖品？')) return;
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('prizes').delete().eq('id', id);
-        if (error) throw error;
-        loadPrizes();
-    } catch (e) { alert('删除失败: ' + e.message); }
+    supabase.from('prizes').delete().eq('id', id).then(function(result) {
+        if (result.error) alert('删除失败: ' + result.error.message);
+        else loadPrizes();
+    });
 }
 
-async function loadFormFields() {
+function loadFormFields() {
     if (!dbReady || !supabase) return;
-    try {
-        const { data, error } = await supabase.from('form_fields').select('*').order('sort_order', { ascending: true });
-        if (error) throw error;
-        currentFormFields = data || [];
+    supabase.from('form_fields').select('*').order('sort_order', { ascending: true }).then(function(result) {
+        if (result.error) { console.error('loadFormFields error:', result.error); return; }
+        currentFormFields = result.data || [];
         renderFormFields();
         buildJoinForm();
-    } catch (e) { console.error('加载字段失败:', e); }
+    });
 }
 
 function renderFormFields() {
-    const container = document.getElementById('form-fields-list');
+    var container = document.getElementById('form-fields-list');
     if (!currentFormFields || currentFormFields.length === 0) {
         container.innerHTML = '<div style="text-align:center; color:#999; padding:12px;">暂无自定义字段</div>';
         return;
     }
-    container.innerHTML = currentFormFields.map(f => `
-        <div class="prize-item">
-            <div>
-                <div class="person-name">${f.label} <span style="color:#999; font-size:12px;">(${f.field_key})</span></div>
-                <div class="person-time">${f.required ? '必填' : '选填'}</div>
-            </div>
-            <button class="delete-btn" onclick="deleteFormField(${f.id})">删除</button>
-        </div>
-    `).join('');
+    var html = '';
+    for (var i = 0; i < currentFormFields.length; i++) {
+        var f = currentFormFields[i];
+        html += '<div class="prize-item"><div><div class="person-name">' + f.label + ' <span style="color:#999; font-size:12px;">(' + f.field_key + ')</span></div><div class="person-time">' + (f.required ? '必填' : '选填') + '</div></div><button class="delete-btn" onclick="deleteFormField(' + f.id + ')">删除</button></div>';
+    }
+    container.innerHTML = html;
 }
 
-async function addFormField() {
-    const label = document.getElementById('field-label').value.trim();
-    const key = document.getElementById('field-key').value.trim();
-    const required = document.getElementById('field-required').checked;
+function addFormField() {
+    var label = document.getElementById('field-label').value.trim();
+    var key = document.getElementById('field-key').value.trim();
+    var required = document.getElementById('field-required').checked;
     if (!label || !key) { alert('请填写字段名称和标识'); return; }
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('form_fields').insert([{ label: label, field_key: key, required: required, sort_order: currentFormFields.length }]);
-        if (error) throw error;
+    supabase.from('form_fields').insert([{ label: label, field_key: key, required: required, sort_order: currentFormFields.length }]).then(function(result) {
+        if (result.error) { alert('添加失败: ' + result.error.message); return; }
         document.getElementById('field-label').value = '';
         document.getElementById('field-key').value = '';
         document.getElementById('field-required').checked = false;
         loadFormFields();
-    } catch (e) { alert('添加失败: ' + e.message); }
+    });
 }
 
-async function deleteFormField(id) {
+function deleteFormField(id) {
     if (!confirm('确定删除该字段？')) return;
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('form_fields').delete().eq('id', id);
-        if (error) throw error;
-        loadFormFields();
-    } catch (e) { alert('删除失败: ' + e.message); }
+    supabase.from('form_fields').delete().eq('id', id).then(function(result) {
+        if (result.error) alert('删除失败: ' + result.error.message);
+        else loadFormFields();
+    });
 }
 
 function buildJoinForm() {
-    const area = document.getElementById('join-form-area');
-    let html = `
-        <div class="input-group">
-            <label>姓名 <span style="color:#ef4444">*</span></label>
-            <input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20">
-        </div>
-    `;
-    currentFormFields.forEach(f => {
-        html += `
-            <div class="input-group">
-                <label>${f.label} ${f.required ? '<span style="color:#ef4444">*</span>' : ''}</label>
-                <input type="text" id="field-${f.field_key}" placeholder="请输入${f.label}" data-key="${f.field_key}" data-required="${f.required}">
-            </div>
-        `;
-    });
+    var area = document.getElementById('join-form-area');
+    var html = '<div class="input-group"><label>姓名 <span style="color:#ef4444">*</span></label><input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20"></div>';
+    for (var i = 0; i < currentFormFields.length; i++) {
+        var f = currentFormFields[i];
+        html += '<div class="input-group"><label>' + f.label + (f.required ? ' <span style="color:#ef4444">*</span>' : '') + '</label><input type="text" id="field-' + f.field_key + '" placeholder="请输入' + f.label + '" data-key="' + f.field_key + '" data-required="' + f.required + '"></div>';
+    }
     area.innerHTML = html;
 }
 
-async function submitLottery() {
-    const name = document.getElementById('participant-name').value.trim();
+function submitLottery() {
+    var name = document.getElementById('participant-name').value.trim();
     if (!name) { alert('请输入姓名'); return; }
     if (!dbReady || !supabase) { alert('数据库未就绪'); return; }
 
-    const customData = {};
-    for (const f of currentFormFields) {
-        const el = document.getElementById(`field-${f.field_key}`);
-        const val = el ? el.value.trim() : '';
-        if (f.required && !val) { alert(`请填写${f.label}`); return; }
+    var customData = {};
+    for (var i = 0; i < currentFormFields.length; i++) {
+        var f = currentFormFields[i];
+        var el = document.getElementById('field-' + f.field_key);
+        var val = el ? el.value.trim() : '';
+        if (f.required && !val) { alert('请填写' + f.label); return; }
         if (val) customData[f.field_key] = val;
     }
 
-    try {
-        const { data: existing } = await supabase.from('lottery_participants').select('id').eq('user_id', deviceId);
-        if (existing && existing.length > 0) { alert('您已参与，请勿重复提交'); return; }
+    supabase.from('lottery_participants').select('id').eq('user_id', deviceId).then(function(eResult) {
+        if (eResult.data && eResult.data.length > 0) { alert('您已参与，请勿重复提交'); return; }
+        doLotterySubmit(name, customData);
+    });
+}
 
-        const isRealtime = globalSettings.lottery_type === 'realtime';
-
-        if (isRealtime) {
-            const { data: prizes } = await supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true });
-            let prizeName = '未中奖';
-            let status = 'lost';
-            let wonPrize = null;
-
-            if (prizes && prizes.length > 0) {
-                const randomIdx = Math.floor(Math.random() * prizes.length);
+function doLotterySubmit(name, customData) {
+    var isRealtime = globalSettings.lottery_type === 'realtime';
+    if (isRealtime) {
+        supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult) {
+            var prizes = pResult.data || [];
+            var prizeName = '未中奖';
+            var status = 'lost';
+            var wonPrize = null;
+            if (prizes.length > 0) {
+                var randomIdx = Math.floor(Math.random() * prizes.length);
                 wonPrize = prizes[randomIdx];
                 prizeName = wonPrize.name;
                 status = 'won';
-                await supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 }).eq('id', wonPrize.id);
+                supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 }).eq('id', wonPrize.id);
             }
-
-            const { error } = await supabase.from('lottery_participants').insert([{
+            supabase.from('lottery_participants').insert([{
                 name: name, user_id: deviceId, custom_data: customData, prize_name: prizeName, status: status
-            }]);
-            if (error) throw error;
-            showLotteryResult(prizeName, status);
-        } else {
-            const { error } = await supabase.from('lottery_participants').insert([{
-                name: name, user_id: deviceId, custom_data: customData, prize_name: null, status: 'pending'
-            }]);
-            if (error) throw error;
-            document.getElementById('lottery-pending-msg').style.display = 'block';
-            setTimeout(() => { document.getElementById('lottery-pending-msg').style.display = 'none'; }, 3000);
-        }
-
-        document.getElementById('participant-name').value = '';
-        currentFormFields.forEach(f => {
-            const el = document.getElementById(`field-${f.field_key}`);
-            if (el) el.value = '';
+            }]).then(function(result) {
+                if (result.error) { alert('参与失败: ' + result.error.message); return; }
+                showLotteryResult(prizeName, status);
+                updateLotteryCount();
+                loadMyLotteryRecords();
+            });
         });
-        updateLotteryCount();
-        loadMyLotteryRecords();
-    } catch (e) {
-        alert('参与失败: ' + e.message);
+    } else {
+        supabase.from('lottery_participants').insert([{
+            name: name, user_id: deviceId, custom_data: customData, prize_name: null, status: 'pending'
+        }]).then(function(result) {
+            if (result.error) { alert('参与失败: ' + result.error.message); return; }
+            document.getElementById('lottery-pending-msg').style.display = 'block';
+            setTimeout(function() { document.getElementById('lottery-pending-msg').style.display = 'none'; }, 3000);
+            updateLotteryCount();
+            loadMyLotteryRecords();
+        });
+    }
+    document.getElementById('participant-name').value = '';
+    for (var i = 0; i < currentFormFields.length; i++) {
+        var el = document.getElementById('field-' + currentFormFields[i].field_key);
+        if (el) el.value = '';
     }
 }
 
 function showLotteryResult(prizeName, status) {
-    const area = document.getElementById('lottery-result-area');
-    const emoji = document.getElementById('result-emoji');
-    const text = document.getElementById('result-text');
-    const sub = document.getElementById('result-sub');
-
+    var area = document.getElementById('lottery-result-area');
+    var emoji = document.getElementById('result-emoji');
+    var text = document.getElementById('result-text');
+    var sub = document.getElementById('result-sub');
     area.classList.remove('hidden');
     if (status === 'won' && prizeName !== '未中奖') {
         emoji.textContent = '🎉';
@@ -840,294 +748,270 @@ function showLotteryResult(prizeName, status) {
         text.style.color = '#666';
         sub.textContent = '很遗憾，您未中奖';
     }
-    setTimeout(() => { area.classList.add('hidden'); }, 5000);
+    setTimeout(function() { area.classList.add('hidden'); }, 5000);
 }
 
-async function manualDraw() {
+function manualDraw() {
     if (!dbReady || !supabase) return;
-    if (!confirm('确定现在开奖？开奖后所有待开奖参与者将随机分配奖品。')) return;
-
-    try {
-        const { data: participants, error: pError } = await supabase.from('lottery_participants').select('*').eq('status', 'pending');
-        if (pError) throw pError;
-        if (!participants || participants.length === 0) { alert('暂无待开奖参与者'); return; }
-
-        const { data: prizes, error: prError } = await supabase.from('prizes').select('*');
-        if (prError) throw prError;
-
-        let prizePool = [];
-        (prizes || []).forEach(p => {
-            for (let i = 0; i < p.remaining; i++) prizePool.push(p);
-        });
-
-        const shuffled = [...participants];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-
-        for (let i = 0; i < shuffled.length; i++) {
-            const p = shuffled[i];
-            if (i < prizePool.length) {
-                const won = prizePool[i];
-                await supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id);
-                await supabase.from('prizes').update({ remaining: won.remaining - 1 }).eq('id', won.id);
-            } else {
-                await supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id);
+    if (!confirm('确定现在开奖？')) return;
+    supabase.from('lottery_participants').select('*').eq('status', 'pending').then(function(pResult) {
+        var participants = pResult.data || [];
+        if (participants.length === 0) { alert('暂无待开奖参与者'); return; }
+        supabase.from('prizes').select('*').then(function(prResult) {
+            var prizes = prResult.data || [];
+            var prizePool = [];
+            for (var i = 0; i < prizes.length; i++) {
+                for (var j = 0; j < prizes[i].remaining; j++) prizePool.push(prizes[i]);
             }
-        }
-
-        alert('开奖完成！共 ' + participants.length + ' 人参与，' + Math.min(prizePool.length, participants.length) + ' 人中奖');
-        loadLotteryParticipants();
-        loadPrizes();
-    } catch (e) {
-        alert('开奖失败: ' + e.message);
-    }
+            var shuffled = participants.slice();
+            for (var k = shuffled.length - 1; k > 0; k--) {
+                var r = Math.floor(Math.random() * (k + 1));
+                var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
+            }
+            var promises = [];
+            for (var m = 0; m < shuffled.length; m++) {
+                var p = shuffled[m];
+                if (m < prizePool.length) {
+                    var won = prizePool[m];
+                    promises.push(supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id));
+                    promises.push(supabase.from('prizes').update({ remaining: won.remaining - 1 }).eq('id', won.id));
+                } else {
+                    promises.push(supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id));
+                }
+            }
+            Promise.all(promises).then(function() {
+                alert('开奖完成！共 ' + participants.length + ' 人参与，' + Math.min(prizePool.length, participants.length) + ' 人中奖');
+                loadLotteryParticipants();
+                loadPrizes();
+            });
+        });
+    });
 }
 
-async function loadLotteryParticipants() {
+function loadLotteryParticipants() {
     if (!dbReady || !supabase) { showLotterySyncStatus('数据库未就绪', false); return; }
     showLotterySyncStatus('同步中...', true);
-    try {
-        const { data, error } = await supabase.from('lottery_participants').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
-        renderLotteryList(data || []);
+    supabase.from('lottery_participants').select('*').order('created_at', { ascending: false }).then(function(result) {
+        if (result.error) { showLotterySyncStatus('同步失败', false); return; }
+        renderLotteryList(result.data || []);
         updateLotteryCount();
         showLotterySyncStatus('已同步', true);
-    } catch (e) {
-        showLotterySyncStatus('同步失败', false);
-    }
+    });
 }
 
 function renderLotteryList(data) {
-    const container = document.getElementById('lottery-list');
+    var container = document.getElementById('lottery-list');
     if (!data || data.length === 0) {
-        container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无参与者</div></div>`;
+        container.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><div>暂无参与者</div></div>';
         return;
     }
-    container.innerHTML = data.map(p => {
-        let statusBadge = '';
+    var html = '';
+    for (var i = 0; i < data.length; i++) {
+        var p = data[i];
+        var statusBadge = '';
         if (p.status === 'pending') statusBadge = '<span class="prize-pending">待开奖</span>';
         else if (p.status === 'won') statusBadge = '<span class="prize-won">🎁 ' + (p.prize_name || '中奖') + '</span>';
         else statusBadge = '<span class="prize-lost">未中奖</span>';
-
-        let customInfo = '';
+        var customInfo = '';
         if (p.custom_data) {
-            const entries = Object.entries(p.custom_data);
-            if (entries.length > 0) customInfo = '<div style="font-size:11px; color:#999; margin-top:2px;">' + entries.map(([k,v]) => `${k}: ${v}`).join(' | ') + '</div>';
+            var entries = Object.entries(p.custom_data);
+            if (entries.length > 0) {
+                var infoParts = [];
+                for (var j = 0; j < entries.length; j++) infoParts.push(entries[j][0] + ': ' + entries[j][1]);
+                customInfo = '<div style="font-size:11px; color:#999; margin-top:2px;">' + infoParts.join(' | ') + '</div>';
+            }
         }
-
-        return `<div class="lottery-item">
-            <div>
-                <div class="person-name">${p.name} ${statusBadge}</div>
-                <div class="person-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
-                ${customInfo}
-            </div>
-            <button class="delete-btn" onclick="deleteLotteryPerson(${p.id})">删除</button>
-        </div>`;
-    }).join('');
+        html += '<div class="lottery-item"><div><div class="person-name">' + p.name + ' ' + statusBadge + '</div><div class="person-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div>' + customInfo + '</div><button class="delete-btn" onclick="deleteLotteryPerson(' + p.id + ')">删除</button></div>';
+    }
+    container.innerHTML = html;
 }
 
-async function deleteLotteryPerson(id) {
+function deleteLotteryPerson(id) {
     if (!confirm('确定删除该参与者？')) return;
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('lottery_participants').delete().eq('id', id);
-        if (error) throw error;
-        loadLotteryParticipants();
-    } catch (e) { alert('删除失败: ' + e.message); }
+    supabase.from('lottery_participants').delete().eq('id', id).then(function(result) {
+        if (result.error) alert('删除失败: ' + result.error.message);
+        else loadLotteryParticipants();
+    });
 }
 
-async function clearLottery() {
+function clearLottery() {
     if (!confirm('确定清空所有抽奖数据？此操作不可恢复！')) return;
     if (!dbReady || !supabase) return;
-    try {
-        const { error } = await supabase.from('lottery_participants').delete().neq('id', 0);
-        if (error) throw error;
-        loadLotteryParticipants();
-        updateLotteryCount();
-        loadMyLotteryRecords();
-    } catch (e) { alert('清空失败: ' + e.message); }
+    supabase.from('lottery_participants').delete().neq('id', 0).then(function(result) {
+        if (result.error) alert('清空失败: ' + result.error.message);
+        else { loadLotteryParticipants(); updateLotteryCount(); loadMyLotteryRecords(); }
+    });
 }
 
-async function updateLotteryCount() {
+function updateLotteryCount() {
     if (!dbReady || !supabase) { document.getElementById('join-count').textContent = '0'; return; }
-    try {
-        const { data, error } = await supabase.from('lottery_participants').select('*');
-        if (error) throw error;
-        document.getElementById('join-count').textContent = data ? data.length : 0;
-        document.getElementById('admin-count').textContent = data ? data.length : 0;
-    } catch (e) { document.getElementById('join-count').textContent = '0'; }
+    supabase.from('lottery_participants').select('*').then(function(result) {
+        var count = (result.data || []).length;
+        document.getElementById('join-count').textContent = count;
+        document.getElementById('admin-count').textContent = count;
+    });
 }
 
 function showLotterySyncStatus(text, isOnline) {
-    const el = document.getElementById('lottery-sync-indicator');
+    var el = document.getElementById('lottery-sync-indicator');
     el.textContent = text;
     el.className = 'sync-status ' + (isOnline ? 'online' : 'offline');
 }
 
-async function loadMyLotteryRecords() {
+function loadMyLotteryRecords() {
     if (!dbReady || !supabase) return;
-    try {
-        const { data, error } = await supabase.from('lottery_participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
-        if (error) throw error;
-        const container = document.getElementById('my-records-list');
-        if (!data || data.length === 0) {
+    supabase.from('lottery_participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false }).then(function(result) {
+        if (result.error) { console.error('loadMyLotteryRecords error:', result.error); return; }
+        var data = result.data || [];
+        var container = document.getElementById('my-records-list');
+        if (data.length === 0) {
             container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
             return;
         }
-        container.innerHTML = data.map(p => {
-            let status = '';
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var p = data[i];
+            var status = '';
             if (p.status === 'pending') status = '<span style="color:#f59e0b;">待开奖</span>';
             else if (p.status === 'won') status = '<span style="color:#10b981; font-weight:600;">🎁 ' + (p.prize_name || '中奖') + '</span>';
             else status = '<span style="color:#999;">未中奖</span>';
-            return `<div class="record-item"><div><div class="record-name">${p.name} - ${status}</div><div class="record-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div></div></div>`;
-        }).join('');
-    } catch (e) { console.error('加载记录失败:', e); }
+            html += '<div class="record-item"><div><div class="record-name">' + p.name + ' - ' + status + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div></div>';
+        }
+        container.innerHTML = html;
+    });
 }
 
-// ==================== 我的记录（分组） ====================
-async function loadMyRecords() {
+// ===== 我的记录（分组） =====
+function loadMyRecords() {
     if (!dbReady || !supabase) return;
-    try {
-        const { data, error } = await supabase.from('participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false });
-        if (error) throw error;
-        const container = document.getElementById('my-records-list');
-        if (!data || data.length === 0) {
+    supabase.from('participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false }).then(function(result) {
+        if (result.error) { console.error('loadMyRecords error:', result.error); return; }
+        var data = result.data || [];
+        var container = document.getElementById('my-records-list');
+        if (data.length === 0) {
             container.innerHTML = '<div style="text-align:center; color:#999; font-size:13px; padding:12px;">暂无记录</div>';
             return;
         }
-        const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
-        const allowEdit = settingsData ? settingsData.allow_edit : false;
-        container.innerHTML = data.map(p => `
-            <div class="record-item" id="record-${p.id}">
-                <div>
-                    <div class="record-name" id="name-display-${p.id}">${p.name}</div>
-                    <div class="record-time">${new Date(p.created_at).toLocaleString('zh-CN')}</div>
-                </div>
-                <div class="record-actions">
-                    ${allowEdit ? `<button class="edit-btn" onclick="startEdit(${p.id}, '${p.name}')">✏️ 修改</button>` : ''}
-                </div>
-            </div>
-        `).join('');
-    } catch (e) { console.error('加载记录失败:', e); }
+        supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(function(sResult) {
+            var allowEdit = sResult.data ? sResult.data.allow_edit : false;
+            var html = '';
+            for (var i = 0; i < data.length; i++) {
+                var p = data[i];
+                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', '' + p.name + '')">✏️ 修改</button>' : '') + '</div></div>';
+            }
+            container.innerHTML = html;
+        });
+    });
 }
 
 function startEdit(id, oldName) {
     isEditing = true;
-    const displayEl = document.getElementById(`name-display-${id}`);
-    const parent = displayEl.parentElement.parentElement;
-    const actions = parent.querySelector('.record-actions');
+    var displayEl = document.getElementById('name-display-' + id);
+    var parent = displayEl.parentElement.parentElement;
+    var actions = parent.querySelector('.record-actions');
     displayEl.style.display = 'none';
-    const input = document.createElement('input');
+    var input = document.createElement('input');
     input.type = 'text';
     input.value = oldName;
     input.style = 'padding:6px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:14px; width:120px;';
-    input.id = `edit-input-${id}`;
+    input.id = 'edit-input-' + id;
     displayEl.parentElement.insertBefore(input, displayEl);
     input.focus();
-    actions.innerHTML = `<button class="save-btn" onclick="saveEdit(${id})">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(${id}, '${oldName}')">❌ 取消</button>`;
+    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', '' + oldName + '')">❌ 取消</button>';
 }
 
 function cancelEdit(id, oldName) {
     isEditing = false;
-    const input = document.getElementById(`edit-input-${id}`);
-    const displayEl = document.getElementById(`name-display-${id}`);
+    var input = document.getElementById('edit-input-' + id);
+    var displayEl = document.getElementById('name-display-' + id);
     if (input) input.remove();
     displayEl.style.display = 'block';
-    const parent = displayEl.parentElement.parentElement;
-    const actions = parent.querySelector('.record-actions');
-    actions.innerHTML = `<button class="edit-btn" onclick="startEdit(${id}, '${oldName}')">✏️ 修改</button>`;
+    var parent = displayEl.parentElement.parentElement;
+    var actions = parent.querySelector('.record-actions');
+    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', '' + oldName + '')">✏️ 修改</button>';
 }
 
-async function saveEdit(id) {
-    const input = document.getElementById(`edit-input-${id}`);
-    const newName = input.value.trim();
+function saveEdit(id) {
+    var input = document.getElementById('edit-input-' + id);
+    var newName = input.value.trim();
     if (!newName) { alert('姓名不能为空'); return; }
-    try {
-        const { error } = await supabase.from('participants').update({ name: newName }).eq('id', id);
-        if (error) throw error;
+    supabase.from('participants').update({ name: newName }).eq('id', id).then(function(result) {
+        if (result.error) { alert('修改失败: ' + result.error.message); return; }
         isEditing = false;
         loadMyRecords();
         updateJoinCount();
-    } catch (e) { alert('修改失败: ' + e.message); }
+    });
 }
 
-// ==================== 二维码 ====================
+// ===== 二维码 =====
 function generateQRAdmin() {
-    const container = document.getElementById('qrcode-admin');
+    var container = document.getElementById('qrcode-admin');
     if (!container) return;
     container.innerHTML = '';
     try {
-        const url = window.location.href.split('?')[0].split('#')[0];
+        var url = window.location.href.split('?')[0].split('#')[0];
         new QRCode(container, { text: url, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
     } catch (e) { console.error('QR生成失败:', e); }
 }
 
 function generateQRJoin() {
-    const container = document.getElementById('qrcode-join');
+    var container = document.getElementById('qrcode-join');
     if (!container) return;
     container.innerHTML = '';
     try {
-        const url = window.location.href.split('?')[0].split('#')[0];
+        var url = window.location.href.split('?')[0].split('#')[0];
         new QRCode(container, { text: url, width: 160, height: 160, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
     } catch (e) { console.error('QR生成失败:', e); }
 }
 
-// ==================== 刷新参与页面 ====================
-async function refreshJoinPage() {
+// ===== 刷新参与页面 =====
+function refreshJoinPage() {
     generateQRJoin();
     if (!dbReady || !supabase) {
         document.getElementById('db-error').classList.remove('hidden');
         return;
     }
     document.getElementById('db-error').classList.add('hidden');
-
-    try {
-        const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
-        if (error) throw error;
-        const mode = data ? data.mode : 'group';
-        const isGroup = mode === 'group';
-
+    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(function(result) {
+        if (result.error) { console.error('refreshJoinPage error:', result.error); return; }
+        var mode = result.data ? result.data.mode : 'group';
+        var isGroup = mode === 'group';
         document.getElementById('join-title').textContent = isGroup ? '📝 活动报名' : '🎰 幸运抽奖';
         document.getElementById('join-subtitle').textContent = isGroup ? '填写姓名完成报名，等待管理员分组' : '填写信息参与抽奖，祝您好运！';
         document.getElementById('join-btn').textContent = isGroup ? '立即报名' : '参与抽奖';
         document.getElementById('qr-tip').textContent = isGroup ? '📲 扫描上方二维码报名' : '📲 扫描上方二维码参与抽奖';
         document.getElementById('lottery-result-area').classList.add('hidden');
         document.getElementById('lottery-pending-msg').style.display = 'none';
-
         if (isGroup) {
             updateJoinCount();
             loadMyRecords();
         } else {
-            await loadFormFields();
-            updateLotteryCount();
-            loadMyLotteryRecords();
+            loadFormFields().then(function() {
+                updateLotteryCount();
+                loadMyLotteryRecords();
+            });
         }
-    } catch (e) {
-        console.error('刷新页面失败:', e);
-    }
+    });
 }
 
-// ==================== 初始化 ====================
+// ===== 初始化 =====
 document.getElementById('group-size').addEventListener('input', function() {
-    const size = parseInt(this.value) || 4;
-    const count = parseInt(document.getElementById('admin-count').textContent) || 0;
+    var size = parseInt(this.value) || 4;
+    var count = parseInt(document.getElementById('admin-count').textContent) || 0;
     document.getElementById('group-num').textContent = count > 0 ? Math.ceil(count / size) : 0;
 });
 
-// 键盘事件委托
 document.addEventListener('keypress', function(e) {
     if (e.target.id === 'participant-name' && e.key === 'Enter') submitJoin();
     if (e.target.id === 'admin-password' && e.key === 'Enter') checkPassword();
 });
 
-// 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     refreshJoinPage();
 });
 
-setInterval(() => {
+setInterval(function() {
     if (isEditing) return;
     if (document.getElementById('admin-section').classList.contains('active')) {
         if (globalSettings.mode === 'group') {
