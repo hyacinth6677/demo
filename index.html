@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>云 端 工 具</title>
+<title>智能分组与抽奖工具</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
@@ -195,6 +195,20 @@ input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
 <div style="display:flex; gap:8px;">
 <button class="btn btn-small btn-primary" id="btn-realtime" onclick="setLotteryType('realtime')">实时</button>
 <button class="btn btn-small btn-secondary" id="btn-manual" onclick="setLotteryType('manual')">手动</button>
+</div>
+</div>
+<div class="toggle-row">
+<div><div class="toggle-label">允许重复提交</div><div class="toggle-desc">同一用户可多次参与抽奖</div></div>
+<input type="checkbox" class="toggle-switch" id="setting-lottery-duplicate" onchange="saveSettings()">
+</div>
+<div class="toggle-row">
+<div><div class="toggle-label">允许用户修改</div><div class="toggle-desc">用户可修改自己提交的信息</div></div>
+<input type="checkbox" class="toggle-switch" id="setting-lottery-edit" onchange="saveSettings()">
+</div>
+<div class="group-config" style="margin-top:16px;">
+<div class="input-group" style="flex:1; margin-bottom:0;">
+<label>中奖概率 (%)</label>
+<input type="number" id="win-probability" value="100" min="0" max="100" onchange="saveSettings()">
 </div>
 </div>
 <h4 style="margin: 20px 0 12px; font-size: 16px;">🎁 奖品设置</h4>
