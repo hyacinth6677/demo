@@ -2,9 +2,7 @@
 var SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
 
-// 先保存真正的 Supabase 库（防止下面的 var 声明覆盖 window.supabase）
 var SupabaseLib = (window.supabase && window.supabase.createClient) ? window.supabase : null;
-
 var supabase = null;
 var dbReady = false;
 try {
@@ -425,7 +423,6 @@ function deleteFormField(id) {
 
 function buildJoinForm() {
     var area = document.getElementById('join-form-area');
-    // 保存当前输入值，防止重建时丢失
     var savedValues = {};
     var nameInput = document.getElementById('participant-name');
     if (nameInput) savedValues['__name__'] = nameInput.value;
@@ -440,7 +437,6 @@ function buildJoinForm() {
         html += '<div class="input-group"><label>' + f.label + (f.required ? ' <span style="color:#ef4444">*</span>' : '') + '</label><input type="text" id="field-' + f.field_key + '" placeholder="请输入' + f.label + '" data-key="' + f.field_key + '" data-required="' + f.required + '"></div>';
     }
     area.innerHTML = html;
-    // 恢复输入值
     var newNameInput = document.getElementById('participant-name');
     if (newNameInput && savedValues['__name__']) newNameInput.value = savedValues['__name__'];
     for (var i = 0; i < currentFormFields.length; i++) {
@@ -480,7 +476,6 @@ function submitLottery() {
 function doLotterySubmit(name, customData) {
     var isRealtime = globalSettings.lottery_type === 'realtime';
     if (isRealtime) {
-        // 先根据概率判断是否中奖
         var winProbability = globalSettings.win_probability || 100;
         var isWin = Math.random() * 100 < winProbability;
         if (!isWin) {
@@ -490,20 +485,17 @@ function doLotterySubmit(name, customData) {
         supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult) {
             var prizes = pResult.data || [];
             if (prizes.length === 0) {
-                // 没有奖品了，直接记录未中奖
                 insertLotteryParticipant(name, customData, '未中奖', 'lost');
                 return;
             }
             var randomIdx = Math.floor(Math.random() * prizes.length);
             var wonPrize = prizes[randomIdx];
-            // 乐观锁更新：确保 remaining 还是读到的值，防止并发超发
             supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 })
                 .eq('id', wonPrize.id)
                 .eq('remaining', wonPrize.remaining)
                 .then(function(updateResult) {
                     var prizeName = '未中奖';
                     var status = 'lost';
-                    // 检查是否真的更新成功了（data 不为空表示匹配并更新了）
                     if (!updateResult.error && updateResult.data && updateResult.data.length > 0) {
                         prizeName = wonPrize.name;
                         status = 'won';
@@ -529,7 +521,6 @@ function doLotterySubmit(name, customData) {
     }
 }
 
-// 抽取公共插入逻辑
 function insertLotteryParticipant(name, customData, prizeName, status) {
     supabase.from('lottery_participants').insert([{
         name: name, user_id: deviceId, custom_data: customData, prize_name: prizeName, status: status
@@ -578,7 +569,6 @@ function manualDraw() {
                 var r = Math.floor(Math.random() * (k + 1));
                 var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
             }
-            // 串行处理，避免并发冲突导致状态不一致
             var index = 0;
             var winners = 0;
             function processNext() {
@@ -591,20 +581,17 @@ function manualDraw() {
                 var p = shuffled[index];
                 if (index < prizePool.length) {
                     var won = prizePool[index];
-                    // 串行扣减奖品，确保 remaining 正确递减
                     supabase.from('prizes').update({ remaining: won.remaining - 1 })
                         .eq('id', won.id)
                         .eq('remaining', won.remaining)
                         .then(function(updateResult) {
                             if (!updateResult.error && updateResult.data && updateResult.data.length > 0) {
-                                // 扣减成功，标记中奖
                                 supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id).then(function() {
                                     winners++;
                                     index++;
                                     processNext();
                                 });
                             } else {
-                                // 扣减失败（已被其他请求扣减），标记未中奖
                                 supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id).then(function() {
                                     index++;
                                     processNext();
@@ -736,7 +723,7 @@ function loadMyRecords() {
             var html = '';
             for (var i = 0; i < data.length; i++) {
                 var p = data[i];
-                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', \'' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
+                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', \' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
             }
             container.innerHTML = html;
         });
@@ -756,7 +743,7 @@ function startEdit(id, oldName) {
     input.id = 'edit-input-' + id;
     displayEl.parentElement.insertBefore(input, displayEl);
     input.focus();
-    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', \'' + oldName + '\')">❌ 取消</button>';
+    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', \' + oldName + '\')">❌ 取消</button>';
 }
 
 function cancelEdit(id, oldName) {
@@ -767,7 +754,7 @@ function cancelEdit(id, oldName) {
     displayEl.style.display = 'block';
     var parent = displayEl.parentElement.parentElement;
     var actions = parent.querySelector('.record-actions');
-    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', \'' + oldName + '\')">✏️ 修改</button>';
+    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', \' + oldName + '\')">✏️ 修改</button>';
 }
 
 function saveEdit(id) {
@@ -853,7 +840,7 @@ function refreshJoinPage() {
     supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(function(result) {
         if (result.error) { console.error('refreshJoinPage error:', result.error); return; }
         var mode = result.data ? result.data.mode : 'group';
-        globalSettings.mode = mode;  // 同步到全局，否则 submitJoin() 判断错误
+        globalSettings.mode = mode;
         var isGroup = mode === 'group';
         document.getElementById('join-title').textContent = isGroup ? '📝 活动报名' : '🎰 幸运抽奖';
         document.getElementById('join-subtitle').textContent = isGroup ? '填写姓名完成报名，等待管理员分组' : '填写信息参与抽奖，祝您好运！';
@@ -861,7 +848,7 @@ function refreshJoinPage() {
         document.getElementById('qr-tip').textContent = isGroup ? '📲 扫描上方二维码报名' : '📲 扫描上方二维码参与抽奖';
         document.getElementById('lottery-result-area').classList.add('hidden');
         document.getElementById('lottery-pending-msg').style.display = 'none';
-        document.getElementById('join-success').style.display = 'none';  // 防止模式切换后残留
+        document.getElementById('join-success').style.display = 'none';
         if (isGroup) {
             updateJoinCount();
             loadMyRecords();
@@ -891,7 +878,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setInterval(function() {
         if (isEditing) return;
-        // 如果用户在参与页面且正在输入，不刷新以免清除表单内容
         var activeEl = document.activeElement;
         var isTypingInJoin = activeEl && activeEl.tagName === 'INPUT' &&
             document.getElementById('join-section').classList.contains('active');
