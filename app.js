@@ -462,24 +462,27 @@ function doLotterySubmit(name, customData) {
     if (isRealtime) {
         supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult) {
             var prizes = pResult.data || [];
-            var prizeName = '未中奖';
-            var status = 'lost';
-            var wonPrize = null;
-            if (prizes.length > 0) {
-                var randomIdx = Math.floor(Math.random() * prizes.length);
-                wonPrize = prizes[randomIdx];
-                prizeName = wonPrize.name;
-                status = 'won';
-                supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 }).eq('id', wonPrize.id);
+            if (prizes.length === 0) {
+                // 没有奖品了，直接记录未中奖
+                insertLotteryParticipant(name, customData, '未中奖', 'lost');
+                return;
             }
-            supabase.from('lottery_participants').insert([{
-                name: name, user_id: deviceId, custom_data: customData, prize_name: prizeName, status: status
-            }]).then(function(result) {
-                if (result.error) { alert('参与失败: ' + result.error.message); return; }
-                showLotteryResult(prizeName, status);
-                updateLotteryCount();
-                loadMyLotteryRecords();
-            });
+            var randomIdx = Math.floor(Math.random() * prizes.length);
+            var wonPrize = prizes[randomIdx];
+            // 乐观锁更新：确保 remaining 还是读到的值，防止并发超发
+            supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 })
+                .eq('id', wonPrize.id)
+                .eq('remaining', wonPrize.remaining)
+                .then(function(updateResult) {
+                    var prizeName = '未中奖';
+                    var status = 'lost';
+                    // 检查是否真的更新成功了（data 不为空表示匹配并更新了）
+                    if (!updateResult.error && updateResult.data && updateResult.data.length > 0) {
+                        prizeName = wonPrize.name;
+                        status = 'won';
+                    }
+                    insertLotteryParticipant(name, customData, prizeName, status);
+                });
         });
     } else {
         supabase.from('lottery_participants').insert([{
@@ -497,6 +500,18 @@ function doLotterySubmit(name, customData) {
         var el = document.getElementById('field-' + currentFormFields[i].field_key);
         if (el) el.value = '';
     }
+}
+
+// 抽取公共插入逻辑
+function insertLotteryParticipant(name, customData, prizeName, status) {
+    supabase.from('lottery_participants').insert([{
+        name: name, user_id: deviceId, custom_data: customData, prize_name: prizeName, status: status
+    }]).then(function(result) {
+        if (result.error) { alert('参与失败: ' + result.error.message); return; }
+        showLotteryResult(prizeName, status);
+        updateLotteryCount();
+        loadMyLotteryRecords();
+    });
 }
 
 function showLotteryResult(prizeName, status) {
