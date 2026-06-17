@@ -744,6 +744,7 @@ function refreshJoinPage() {
     supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(function(result) {
         if (result.error) { console.error('refreshJoinPage error:', result.error); return; }
         var mode = result.data ? result.data.mode : 'group';
+        globalSettings.mode = mode;  // 同步到全局，否则 submitJoin() 判断错误
         var isGroup = mode === 'group';
         document.getElementById('join-title').textContent = isGroup ? '📝 活动报名' : '🎰 幸运抽奖';
         document.getElementById('join-subtitle').textContent = isGroup ? '填写姓名完成报名，等待管理员分组' : '填写信息参与抽奖，祝您好运！';
@@ -751,6 +752,7 @@ function refreshJoinPage() {
         document.getElementById('qr-tip').textContent = isGroup ? '📲 扫描上方二维码报名' : '📲 扫描上方二维码参与抽奖';
         document.getElementById('lottery-result-area').classList.add('hidden');
         document.getElementById('lottery-pending-msg').style.display = 'none';
+        document.getElementById('join-success').style.display = 'none';  // 防止模式切换后残留
         if (isGroup) {
             updateJoinCount();
             loadMyRecords();
