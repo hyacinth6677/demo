@@ -412,12 +412,29 @@ function deleteFormField(id) {
 
 function buildJoinForm() {
     var area = document.getElementById('join-form-area');
+    // 保存当前输入值，防止重建时丢失
+    var savedValues = {};
+    var nameInput = document.getElementById('participant-name');
+    if (nameInput) savedValues['__name__'] = nameInput.value;
+    var existingFields = area.querySelectorAll('input[data-key]');
+    for (var i = 0; i < existingFields.length; i++) {
+        var el = existingFields[i];
+        savedValues[el.getAttribute('data-key')] = el.value;
+    }
     var html = '<div class="input-group"><label>姓名 <span style="color:#ef4444">*</span></label><input type="text" id="participant-name" placeholder="请输入真实姓名" maxlength="20"></div>';
     for (var i = 0; i < currentFormFields.length; i++) {
         var f = currentFormFields[i];
         html += '<div class="input-group"><label>' + f.label + (f.required ? ' <span style="color:#ef4444">*</span>' : '') + '</label><input type="text" id="field-' + f.field_key + '" placeholder="请输入' + f.label + '" data-key="' + f.field_key + '" data-required="' + f.required + '"></div>';
     }
     area.innerHTML = html;
+    // 恢复输入值
+    var newNameInput = document.getElementById('participant-name');
+    if (newNameInput && savedValues['__name__']) newNameInput.value = savedValues['__name__'];
+    for (var i = 0; i < currentFormFields.length; i++) {
+        var f = currentFormFields[i];
+        var el = document.getElementById('field-' + f.field_key);
+        if (el && savedValues[f.field_key]) el.value = savedValues[f.field_key];
+    }
 }
 
 function submitLottery() {
@@ -763,6 +780,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setInterval(function() {
         if (isEditing) return;
+        // 如果用户在参与页面且正在输入，不刷新以免清除表单内容
+        var activeEl = document.activeElement;
+        var isTypingInJoin = activeEl && activeEl.tagName === 'INPUT' &&
+            document.getElementById('join-section').classList.contains('active');
+        if (isTypingInJoin) return;
         if (document.getElementById('admin-section').classList.contains('active')) {
             if (globalSettings.mode === 'group') {
                 loadParticipants();
