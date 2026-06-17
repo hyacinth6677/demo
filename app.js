@@ -290,17 +290,14 @@ function updateGroupNum(num) { document.getElementById('group-num').textContent 
 function copyResult() {
     var cards = document.querySelectorAll('.group-card');
     if (cards.length === 0) return;
-    var text = '🎲 随机分组结果：
-
-';
+    var text = '🎲 随机分组结果：\n\n';
     for (var i = 0; i < cards.length; i++) {
         var card = cards[i];
         var title = card.querySelector('.group-title').textContent.trim();
         var tags = card.querySelectorAll('.member-tag');
         var members = [];
         for (var j = 0; j < tags.length; j++) members.push(tags[j].textContent);
-        text += title + '：' + members.join('、') + '
-';
+        text += title + '：' + members.join('、') + '\n';
     }
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(function() { alert('已复制'); });
@@ -443,7 +440,7 @@ function submitLottery() {
 function doLotterySubmit(name, customData) {
     var isRealtime = globalSettings.lottery_type === 'realtime';
     if (isRealtime) {
-        supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult) {
+        supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult)ttt) {
             var prizes = pResult.data || [];
             var prizeName = '未中奖';
             var status = 'lost';
@@ -515,7 +512,7 @@ function manualDraw() {
                 for (var j = 0; j < prizes[i].remaining; j++) prizePool.push(prizes[i]);
             }
             var shuffled = participants.slice();
-            for (var k = shuffled.length - 1; k > 0; k--) {
+            for (var k = shuffled.length - 1; k > 0在0; k--) {
                 var r = Math.floor(Math.random() * (k + 1));
                 var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
             }
@@ -611,7 +608,7 @@ function showLotterySyncStatus(text, isOnline) {
 }
 
 function loadMyLotteryRecords() {
-    if (!dbReady || !supabase) return;
+    if (!dbReady || !supabase)在 return;
     supabase.from('lottery_participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false }).then(function(result) {
         if (result.error) { console.error('loadMyLotteryRecords error:', result.error); return; }
         var data = result.data || [];
@@ -649,7 +646,7 @@ function loadMyRecords() {
             var html = '';
             for (var i = 0; i < data.length; i++) {
                 var p = data[i];
-                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', '' + p.name + '')">✏️ 修改</button>' : '') + '</div></div>';
+                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', \'' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
             }
             container.innerHTML = html;
         });
@@ -669,7 +666,7 @@ function startEdit(id, oldName) {
     input.id = 'edit-input-' + id;
     displayEl.parentElement.insertBefore(input, displayEl);
     input.focus();
-    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', '' + oldName + '')">❌ 取消</button>';
+    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', \'' + oldName + '\')">❌ 取消</button>';
 }
 
 function cancelEdit(id, oldName) {
@@ -680,7 +677,7 @@ function cancelEdit(id, oldName) {
     displayEl.style.display = 'block';
     var parent = displayEl.parentElement.parentElement;
     var actions = parent.querySelector('.record-actions');
-    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', '' + oldName + '')">✏️ 修改</button>';
+    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', \'' + oldName + '\')">✏️ 修改</button>';
 }
 
 function saveEdit(id) {
@@ -697,6 +694,7 @@ function saveEdit(id) {
 
 // ===== 二维码 =====
 function generateQRAdmin() {
+RROR: 0.0001,
     var container = document.getElementById('qrcode-admin');
     if (!container) return;
     container.innerHTML = '';
