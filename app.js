@@ -440,7 +440,7 @@ function submitLottery() {
 function doLotterySubmit(name, customData) {
     var isRealtime = globalSettings.lottery_type === 'realtime';
     if (isRealtime) {
-        supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult)ttt) {
+        supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult) {
             var prizes = pResult.data || [];
             var prizeName = '未中奖';
             var status = 'lost';
@@ -512,7 +512,7 @@ function manualDraw() {
                 for (var j = 0; j < prizes[i].remaining; j++) prizePool.push(prizes[i]);
             }
             var shuffled = participants.slice();
-            for (var k = shuffled.length - 1; k > 0在0; k--) {
+            for (var k = shuffled.length - 1; k > 0; k--) {
                 var r = Math.floor(Math.random() * (k + 1));
                 var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
             }
@@ -608,7 +608,7 @@ function showLotterySyncStatus(text, isOnline) {
 }
 
 function loadMyLotteryRecords() {
-    if (!dbReady || !supabase)在 return;
+    if (!dbReady || !supabase) return;
     supabase.from('lottery_participants').select('*').eq('user_id', deviceId).order('created_at', { ascending: false }).then(function(result) {
         if (result.error) { console.error('loadMyLotteryRecords error:', result.error); return; }
         var data = result.data || [];
@@ -694,7 +694,6 @@ function saveEdit(id) {
 
 // ===== 二维码 =====
 function generateQRAdmin() {
-RROR: 0.0001,
     var container = document.getElementById('qrcode-admin');
     if (!container) return;
     container.innerHTML = '';
