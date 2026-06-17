@@ -2,11 +2,14 @@
 var SUPABASE_URL = 'https://pxizkofagxnvbmxljmtp.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4aXprb2ZhZ3hudmJteGxqbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTk1MTMsImV4cCI6MjA5NjczNTUxM30.Mnfdd0wyLWLVsIU5d34eUJ0oqBE9Kt7wxwLWwly-vAM';
 
+// 先保存真正的 Supabase 库（防止下面的 var 声明覆盖 window.supabase）
+var SupabaseLib = (window.supabase && window.supabase.createClient) ? window.supabase : null;
+
 var supabase = null;
 var dbReady = false;
 try {
-    if (window.supabase && window.supabase.createClient) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (SupabaseLib && SupabaseLib.createClient) {
+        supabase = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbReady = true;
     }
 } catch (e) {
