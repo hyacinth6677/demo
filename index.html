@@ -95,7 +95,6 @@ input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
 .lottery-result .sub { font-size: 14px; color: #666; margin-top: 8px; }
 .draw-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; font-size: 20px; padding: 20px; border-radius: 16px; margin: 20px 0; }
 </style>
-<base target="_blank">
 </head>
 <body>
 
@@ -963,10 +962,49 @@ function loadMyLotteryRecords() {
                 if (p.status === 'pending') status = '<span style="color:#f59e0b;">待开奖</span>';
                 else if (p.status === 'won') status = '<span style="color:#10b981; font-weight:600;">🎁 ' + (p.prize_name || '中奖') + '</span>';
                 else status = '<span style="color:#999;">未中奖</span>';
-                html += '<div class="record-item" id="lottery-record-' + p.id + '"><div><div class="record-name" id="lottery-name-display-' + p.id + '">' + p.name + ' - ' + status + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEditLottery(' + p.id + ', \' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
+                html += '<div class="record-item" id="lottery-record-' + p.id + '"><div><div class="record-name" id="lottery-name-display-' + p.id + '">' + p.name + ' - ' + status + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEditLottery(' + p.id + ', \'' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
             }
             container.innerHTML = html;
         });
+    });
+}
+
+function startEditLottery(id, oldName) {
+    isEditing = true;
+    var displayEl = document.getElementById('lottery-name-display-' + id);
+    var parent = displayEl.parentElement.parentElement;
+    var actions = parent.querySelector('.record-actions');
+    displayEl.style.display = 'none';
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldName;
+    input.style = 'padding:6px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:14px; width:120px;';
+    input.id = 'lottery-edit-input-' + id;
+    displayEl.parentElement.insertBefore(input, displayEl);
+    input.focus();
+    actions.innerHTML = '<button class="save-btn" onclick="saveEditLottery(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEditLottery(' + id + ', \'' + oldName + '\')">❌ 取消</button>';
+}
+
+function cancelEditLottery(id, oldName) {
+    isEditing = false;
+    var input = document.getElementById('lottery-edit-input-' + id);
+    var displayEl = document.getElementById('lottery-name-display-' + id);
+    if (input) input.remove();
+    displayEl.style.display = 'block';
+    var parent = displayEl.parentElement.parentElement;
+    var actions = parent.querySelector('.record-actions');
+    actions.innerHTML = '<button class="edit-btn" onclick="startEditLottery(' + id + ', \'' + oldName + '\')">✏️ 修改</button>';
+}
+
+function saveEditLottery(id) {
+    var input = document.getElementById('lottery-edit-input-' + id);
+    var newName = input.value.trim();
+    if (!newName) { alert('姓名不能为空'); return; }
+    supabase.from('lottery_participants').update({ name: newName }).eq('id', id).then(function(result) {
+        if (result.error) { alert('修改失败: ' + result.error.message); return; }
+        isEditing = false;
+        loadMyLotteryRecords();
+        updateLotteryCount();
     });
 }
 
@@ -986,7 +1024,7 @@ function loadMyRecords() {
             var html = '';
             for (var i = 0; i < data.length; i++) {
                 var p = data[i];
-                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', \' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
+                html += '<div class="record-item" id="record-' + p.id + '"><div><div class="record-name" id="name-display-' + p.id + '">' + p.name + '</div><div class="record-time">' + new Date(p.created_at).toLocaleString('zh-CN') + '</div></div><div class="record-actions">' + (allowEdit ? '<button class="edit-btn" onclick="startEdit(' + p.id + ', \'' + p.name + '\')">✏️ 修改</button>' : '') + '</div></div>';
             }
             container.innerHTML = html;
         });
@@ -1006,7 +1044,7 @@ function startEdit(id, oldName) {
     input.id = 'edit-input-' + id;
     displayEl.parentElement.insertBefore(input, displayEl);
     input.focus();
-    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', \' + oldName + '\')">❌ 取消</button>';
+    actions.innerHTML = '<button class="save-btn" onclick="saveEdit(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEdit(' + id + ', \'' + oldName + '\')">❌ 取消</button>';
 }
 
 function cancelEdit(id, oldName) {
@@ -1017,7 +1055,7 @@ function cancelEdit(id, oldName) {
     displayEl.style.display = 'block';
     var parent = displayEl.parentElement.parentElement;
     var actions = parent.querySelector('.record-actions');
-    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', \' + oldName + '\')">✏️ 修改</button>';
+    actions.innerHTML = '<button class="edit-btn" onclick="startEdit(' + id + ', \'' + oldName + '\')">✏️ 修改</button>';
 }
 
 function saveEdit(id) {
@@ -1029,45 +1067,6 @@ function saveEdit(id) {
         isEditing = false;
         loadMyRecords();
         updateJoinCount();
-    });
-}
-
-function startEditLottery(id, oldName) {
-    isEditing = true;
-    var displayEl = document.getElementById('lottery-name-display-' + id);
-    var parent = displayEl.parentElement.parentElement;
-    var actions = parent.querySelector('.record-actions');
-    displayEl.style.display = 'none';
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.value = oldName;
-    input.style = 'padding:6px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:14px; width:120px;';
-    input.id = 'lottery-edit-input-' + id;
-    displayEl.parentElement.insertBefore(input, displayEl);
-    input.focus();
-    actions.innerHTML = '<button class="save-btn" onclick="saveEditLottery(' + id + ')">💾 保存</button><button class="cancel-btn" onclick="cancelEditLottery(' + id + ', \' + oldName + '\')">❌ 取消</button>';
-}
-
-function cancelEditLottery(id, oldName) {
-    isEditing = false;
-    var input = document.getElementById('lottery-edit-input-' + id);
-    var displayEl = document.getElementById('lottery-name-display-' + id);
-    if (input) input.remove();
-    displayEl.style.display = 'block';
-    var parent = displayEl.parentElement.parentElement;
-    var actions = parent.querySelector('.record-actions');
-    actions.innerHTML = '<button class="edit-btn" onclick="startEditLottery(' + id + ', \' + oldName + '\')">✏️ 修改</button>';
-}
-
-function saveEditLottery(id) {
-    var input = document.getElementById('lottery-edit-input-' + id);
-    var newName = input.value.trim();
-    if (!newName) { alert('姓名不能为空'); return; }
-    supabase.from('lottery_participants').update({ name: newName }).eq('id', id).then(function(result) {
-        if (result.error) { alert('修改失败: ' + result.error.message); return; }
-        isEditing = false;
-        loadMyLotteryRecords();
-        updateLotteryCount();
     });
 }
 
@@ -1159,7 +1158,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3000);
 });
-
 </script>
 </body>
 </html>
