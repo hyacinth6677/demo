@@ -737,37 +737,35 @@ function submitLottery() {
 
 function doLotterySubmit(name, customData) {
     var isRealtime = globalSettings.lottery_type === 'realtime';
+    
     if (isRealtime) {
-        var winProbability = globalSettings.win_probability || 100;
-        var isWin = Math.random() * 100 < winProbability;
-        if (!isWin) {
-            insertLotteryParticipant(name, customData, '未中奖', 'lost');
-            return;
-        }
-        supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(pResult) {
-            var prizes = pResult.data || [];
-            if (prizes.length === 0) {
-                insertLotteryParticipant(name, customData, '未中奖', 'lost');
+        supabase.rpc('draw_prize', {
+            p_user_id: deviceId,
+            p_name: name,
+            p_custom_data: customData || {}
+        }).then(function(result) {
+            if (result.error) {
+                alert('抽奖失败: ' + result.error.message);
                 return;
             }
-            var randomIdx = Math.floor(Math.random() * prizes.length);
-            var wonPrize = prizes[randomIdx];
-            supabase.from('prizes').update({ remaining: wonPrize.remaining - 1 })
-                .eq('id', wonPrize.id)
-                .eq('remaining', wonPrize.remaining)
-                .then(function(updateResult) {
-                    var prizeName = '未中奖';
-                    var status = 'lost';
-                    if (!updateResult.error && updateResult.data && updateResult.data.length > 0) {
-                        prizeName = wonPrize.name;
-                        status = 'won';
-                    }
-                    insertLotteryParticipant(name, customData, prizeName, status);
-                });
+            
+            var prizeName = result.data[0].prize_name;
+            var status = result.data[0].status;
+            
+            if (status === 'duplicate') {
+                alert('您已参与，请勿重复提交');
+                return;
+            }
+            
+            showLotteryResult(prizeName, status);
+            updateLotteryCount();
+            loadMyLotteryRecords();
+            loadPrizes();
         });
     } else {
         supabase.from('lottery_participants').insert([{
-            name: name, user_id: deviceId, custom_data: customData, prize_name: null, status: 'pending'
+            name: name, user_id: deviceId, custom_data: customData, 
+            prize_name: null, status: 'pending'
         }]).then(function(result) {
             if (result.error) { alert('参与失败: ' + result.error.message); return; }
             document.getElementById('lottery-pending-msg').style.display = 'block';
@@ -776,6 +774,7 @@ function doLotterySubmit(name, customData) {
             loadMyLotteryRecords();
         });
     }
+    
     document.getElementById('participant-name').value = '';
     for (var i = 0; i < currentFormFields.length; i++) {
         var el = document.getElementById('field-' + currentFormFields[i].field_key);
