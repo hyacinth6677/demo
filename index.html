@@ -95,6 +95,7 @@ input:focus { outline: none; border-color: #4f46e5; background: #fafaff; }
 .lottery-result .sub { font-size: 14px; color: #666; margin-top: 8px; }
 .draw-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; font-size: 20px; padding: 20px; border-radius: 16px; margin: 20px 0; }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -737,7 +738,7 @@ function submitLottery() {
 
 function doLotterySubmit(name, customData) {
     var isRealtime = globalSettings.lottery_type === 'realtime';
-    
+
     if (isRealtime) {
         supabase.rpc('draw_prize', {
             p_user_id: deviceId,
@@ -748,15 +749,15 @@ function doLotterySubmit(name, customData) {
                 alert('抽奖失败: ' + result.error.message);
                 return;
             }
-            
+
             var prizeName = result.data[0].prize_name;
             var status = result.data[0].status;
-            
+
             if (status === 'duplicate') {
                 alert('您已参与，请勿重复提交');
                 return;
             }
-            
+
             showLotteryResult(prizeName, status);
             updateLotteryCount();
             loadMyLotteryRecords();
@@ -774,7 +775,7 @@ function doLotterySubmit(name, customData) {
             loadMyLotteryRecords();
         });
     }
-    
+
     document.getElementById('participant-name').value = '';
     for (var i = 0; i < currentFormFields.length; i++) {
         var el = document.getElementById('field-' + currentFormFields[i].field_key);
@@ -782,16 +783,6 @@ function doLotterySubmit(name, customData) {
     }
 }
 
-function insertLotteryParticipant(name, customData, prizeName, status) {
-    supabase.from('lottery_participants').insert([{
-        name: name, user_id: deviceId, custom_data: customData, prize_name: prizeName, status: status
-    }]).then(function(result) {
-        if (result.error) { alert('参与失败: ' + result.error.message); return; }
-        showLotteryResult(prizeName, status);
-        updateLotteryCount();
-        loadMyLotteryRecords();
-    });
-}
 
 function showLotteryResult(prizeName, status) {
     var area = document.getElementById('lottery-result-area');
@@ -816,58 +807,53 @@ function showLotteryResult(prizeName, status) {
 function manualDraw() {
     if (!dbReady || !supabase) return;
     if (!confirm('确定现在开奖？')) return;
+
     supabase.from('lottery_participants').select('*').eq('status', 'pending').then(function(pResult) {
         var participants = pResult.data || [];
         if (participants.length === 0) { alert('暂无待开奖参与者'); return; }
-        supabase.from('prizes').select('*').then(function(prResult) {
-            var prizes = prResult.data || [];
-            var prizePool = [];
-            for (var i = 0; i < prizes.length; i++) {
-                for (var j = 0; j < prizes[i].remaining; j++) prizePool.push(prizes[i]);
+
+        var shuffled = participants.slice();
+        for (var k = shuffled.length - 1; k > 0; k--) {
+            var r = Math.floor(Math.random() * (k + 1));
+            var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
+        }
+
+        var index = 0;
+        var winners = 0;
+
+        function processNext() {
+            if (index >= shuffled.length) {
+                alert('开奖完成！共 ' + participants.length + ' 人参与，' + winners + ' 人中奖');
+                loadLotteryParticipants();
+                loadPrizes();
+                return;
             }
-            var shuffled = participants.slice();
-            for (var k = shuffled.length - 1; k > 0; k--) {
-                var r = Math.floor(Math.random() * (k + 1));
-                var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
-            }
-            var index = 0;
-            var winners = 0;
-            function processNext() {
-                if (index >= shuffled.length) {
-                    alert('开奖完成！共 ' + participants.length + ' 人参与，' + winners + ' 人中奖');
-                    loadLotteryParticipants();
-                    loadPrizes();
-                    return;
-                }
-                var p = shuffled[index];
-                if (index < prizePool.length) {
-                    var won = prizePool[index];
-                    supabase.from('prizes').update({ remaining: won.remaining - 1 })
-                        .eq('id', won.id)
-                        .eq('remaining', won.remaining)
-                        .then(function(updateResult) {
-                            if (!updateResult.error && updateResult.data && updateResult.data.length > 0) {
-                                supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id).then(function() {
-                                    winners++;
-                                    index++;
-                                    processNext();
-                                });
-                            } else {
-                                supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id).then(function() {
-                                    index++;
-                                    processNext();
-                                });
-                            }
+
+            var p = shuffled[index];
+
+            supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(prResult) {
+                var availablePrizes = prResult.data || [];
+
+                if (availablePrizes.length > 0) {
+                    var won = availablePrizes[Math.floor(Math.random() * availablePrizes.length)];
+
+                    supabase.from('prizes').update({ remaining: won.remaining - 1 }).eq('id', won.id).then(function() {
+                        supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id).then(function() {
+                            winners++;
+                            index++;
+                            processNext();
                         });
+                    });
                 } else {
                     supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id).then(function() {
                         index++;
                         processNext();
                     });
                 }
-            }
-            processNext();
-        });
+            });
+        }
+
+        processNext();
     });
 }
 
