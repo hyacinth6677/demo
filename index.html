@@ -808,52 +808,21 @@ function manualDraw() {
     if (!dbReady || !supabase) return;
     if (!confirm('确定现在开奖？')) return;
 
-    supabase.from('lottery_participants').select('*').eq('status', 'pending').then(function(pResult) {
-        var participants = pResult.data || [];
-        if (participants.length === 0) { alert('暂无待开奖参与者'); return; }
-
-        var shuffled = participants.slice();
-        for (var k = shuffled.length - 1; k > 0; k--) {
-            var r = Math.floor(Math.random() * (k + 1));
-            var temp = shuffled[k]; shuffled[k] = shuffled[r]; shuffled[r] = temp;
+    supabase.rpc('manual_draw_batch').then(function(result) {
+        if (result.error) {
+            alert('开奖失败: ' + result.error.message);
+            return;
         }
 
-        var index = 0;
+        var data = result.data || [];
         var winners = 0;
-
-        function processNext() {
-            if (index >= shuffled.length) {
-                alert('开奖完成！共 ' + participants.length + ' 人参与，' + winners + ' 人中奖');
-                loadLotteryParticipants();
-                loadPrizes();
-                return;
-            }
-
-            var p = shuffled[index];
-
-            supabase.from('prizes').select('*').gt('remaining', 0).order('created_at', { ascending: true }).then(function(prResult) {
-                var availablePrizes = prResult.data || [];
-
-                if (availablePrizes.length > 0) {
-                    var won = availablePrizes[Math.floor(Math.random() * availablePrizes.length)];
-
-                    supabase.from('prizes').update({ remaining: won.remaining - 1 }).eq('id', won.id).then(function() {
-                        supabase.from('lottery_participants').update({ prize_name: won.name, status: 'won' }).eq('id', p.id).then(function() {
-                            winners++;
-                            index++;
-                            processNext();
-                        });
-                    });
-                } else {
-                    supabase.from('lottery_participants').update({ prize_name: '未中奖', status: 'lost' }).eq('id', p.id).then(function() {
-                        index++;
-                        processNext();
-                    });
-                }
-            });
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].status === 'won') winners++;
         }
 
-        processNext();
+        alert('开奖完成！共 ' + data.length + ' 人参与，' + winners + ' 人中奖');
+        loadLotteryParticipants();
+        loadPrizes();
     });
 }
 
